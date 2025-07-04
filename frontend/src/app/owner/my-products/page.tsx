@@ -8,6 +8,7 @@ import { type Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import ProductForm from '@/components/owner/ProductForm'; // Import form universal kita
+import Image from "next/image";
 
 // Definisikan tipe untuk kategori
 interface Category {
@@ -20,7 +21,6 @@ export default function MyProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]); // <-- State baru untuk menyimpan daftar kategori
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -145,11 +145,19 @@ export default function MyProductsPage() {
               <tr key={product.id}>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 w-12 h-12"><img className="w-full h-full rounded-md object-cover" src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`} alt={product.name} /></div>
+                    <div className="flex-shrink-0 w-12 h-12">
+
+                      <Image
+                        className="w-full h-full rounded-md object-cover" 
+                        src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`} 
+                        alt={product.name} width={400} height={400}
+                      />
+
+                      </div>
                     <div className="ml-3"><p className="font-semibold">{product.name}</p><p className="text-sm text-gray-600">{product.category?.name || 'Uncategorized'}</p></div>
                   </div>
                 </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">Rp {new Intl.NumberFormat('id-ID').format(product.price)}</td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-green-500 text-sm">Rp {new Intl.NumberFormat('id-ID').format(product.price)}</td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{product.stock}</td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   <div className="flex items-center gap-3">

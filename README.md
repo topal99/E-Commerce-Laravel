@@ -1,4 +1,4 @@
-# Platform E-Commerce "Phoenix"
+# Platform E-Commerce
 
 Ini adalah repository untuk proyek e-commerce full-stack yang dibangun dengan arsitektur headless.
 

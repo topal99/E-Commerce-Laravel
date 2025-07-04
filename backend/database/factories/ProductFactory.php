@@ -11,21 +11,21 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $productImages = [
-        'products/baju1.jpg',
-        'products/baju2.jpg',
-        'products/baju3.jpg',
-        'products/celana1.jpg',
-        'products/celana2.jpg',
-        'products/celana3.jpg',
-        'products/gadget.jpg',
-        'products/gadget2.jpg',
-        'products/gadget3.jpg',
-        'products/sepatu.jpg',
-        'products/sepatu2.jpg',
-        'products/sepatu3.jpg',
-        'products/tas.jpg',
-        'products/tas1.jpg',
-        'products/tas2.jpg',
+        'baju1.jpg',
+        'baju2.jpg',
+        'baju3.jpg',
+        'celana1.jpg',
+        'celana2.jpg',
+        'celana3.jpg',
+        'gadget.jpg',
+        'gadget2.jpg',
+        'gadget3.jpg',
+        'sepatu.jpg',
+        'sepatu2.jpg',
+        'sepatu3.jpg',
+        'tas.jpg',
+        'tas1.jpg',
+        'tas2.jpg',
         ];
 
         $name = fake()->words(rand(2, 4), true); // Nama produk dari 2-4 kata
@@ -39,7 +39,7 @@ class ProductFactory extends Factory
             'price' => fake()->numberBetween(50000, 3000000),
             'stock' => fake()->numberBetween(5, 50),
             'category_id' => !empty($categoryIds) ? fake()->randomElement($categoryIds) : null,
-            'image_url' => fake()->randomElement($productImages),
+            'image_url' => 'products/' . fake()->randomElement($productImages),
         ];
     }
 }

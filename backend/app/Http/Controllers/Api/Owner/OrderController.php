@@ -28,7 +28,9 @@ class OrderController extends Controller
             // Ambil HANYA item yang relevan untuk owner ini, beserta detail produknya
             'items' => function($query) use ($ownerProductIds) {
                 $query->whereIn('product_id', $ownerProductIds)->with('product');
-            }
+            },
+            'shippingAddress' 
+
         ])
         ->latest() // Urutkan dari pesanan terbaru
         ->get();

@@ -15,6 +15,10 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\Owner\OrderController as OwnerOrderController;
 use App\Http\Controllers\Api\Owner\StatsController; 
+use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\ShippingController; 
+use App\Http\Controllers\Api\CouponController; 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -66,8 +70,18 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
 
     Route::get('/orders/history', [OrderController::class, 'history']);
     Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel']);
 
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist/toggle', [WishlistController::class, 'toggle']);
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
+
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
+
+    Route::post('/shipping-options', [ShippingController::class, 'getOptions']);
+    Route::post('/coupons/apply', [CouponController::class, 'apply']);
+
 });

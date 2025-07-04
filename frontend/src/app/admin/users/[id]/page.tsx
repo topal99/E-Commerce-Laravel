@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Cookies from 'js-cookie';
 import toast, { Toaster } from 'react-hot-toast';
+import Image from "next/image";
 
 // Definisikan tipe data agar kode lebih aman dan jelas
 interface Product {
@@ -109,7 +110,13 @@ export default function OwnerDetailPage() {
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 w-12 h-12">
-                      <img className="w-full h-full rounded-md object-cover" src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`} alt={product.name} />
+
+                      <Image
+                        className="w-full h-full rounded-md object-cover" 
+                        src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`} 
+                        alt={product.name} width={400} height={400}
+                      />
+                    
                     </div>
                     <div className="ml-3">
                       <p className="text-gray-900 whitespace-no-wrap font-semibold">{product.name}</p>

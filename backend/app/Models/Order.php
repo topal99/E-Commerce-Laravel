@@ -17,9 +17,13 @@ class Order extends Model
      */
     protected $fillable = [
         'user_id',
+        'shipping_address_id',
         'total_price',
+        'shipping_cost',
         'status',
         'snap_token',
+        'coupon_code',
+        'discount_amount',
     ];
 
     /**
@@ -38,4 +42,10 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function shippingAddress(): BelongsTo
+    {
+        return $this->belongsTo(Address::class, 'shipping_address_id');
+    }
+
 }

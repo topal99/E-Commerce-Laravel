@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useEffect, useState } from 'react';
-import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar } from "lucide-react";
+import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map } from "lucide-react";
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useRouter } from 'next/navigation'; // <-- Import useRouter
 
@@ -184,6 +184,11 @@ export default function Header() {
                 <>
                   <DropdownMenuLabel>Hi, {user.name}!</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {user.role === 'customer' && (
+                  <>
+                    <Link href="/my-account/addresses"><DropdownMenuItem><Map className="mr-2 h-4 w-4" />Alamat Saya</DropdownMenuItem></Link>
+                  </>
+                  )}
                   {user.role === 'store_owner' && (
                     <>
                       <Link href="/owner/dashboard"><DropdownMenuItem>

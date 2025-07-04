@@ -8,9 +8,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import UpdateOrderForm from '@/components/owner/UpdateOrderForm';
 import { Badge } from '@/components/ui/badge';
 import { type Product } from '@/lib/types';
-import { cn } from '@/lib/utils'; // Import cn untuk menggabungkan kelas
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { MapPin, Tag } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 // Definisikan tipe data yang diterima dari API
+interface Address {
+  id: number;
+  label: string;
+  recipient_name: string;
+  phone_number: string;
+  full_address: string;
+  city: string;
+  province: string;
+  postal_code: string;
+}
+
 interface OrderItem {
   id: number;
   status: 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -19,11 +33,17 @@ interface OrderItem {
   quantity: number;
   price: number;
 }
+
 export interface Order {
   id: number;
   created_at: string;
   user: { name: string; };
   items: OrderItem[];
+  shipping_address: Address | null;
+  shipping_cost: number;
+  total_price: number;
+  coupon_code: string | null;
+  discount_amount: number;
 }
 
 // Objek untuk memetakan status ke gaya warna badge
@@ -68,7 +88,7 @@ export default function OwnerOrdersPage() {
   };
   
   if (isLoading) return <div className="p-8 text-center">Memuat pesanan masuk...</div>;
-
+          
   return (
     <div className="container mx-auto p-4 md:p-8">
       <Toaster />
@@ -76,57 +96,78 @@ export default function OwnerOrdersPage() {
       
       <div className="space-y-6">
         {orders.length > 0 ? orders.map((order) => {
-          // Hitung subtotal hanya untuk item milik owner di pesanan ini
+          // Kalkulasi subtotal hanya untuk produk milik owner di pesanan ini
           const subtotalForOwner = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-          // Ambil status dari item pertama sebagai representasi status pesanan
           const representativeStatus = order.items[0]?.status || 'processing';
+
           
           return (
             <div key={order.id} className="bg-white p-6 rounded-lg shadow-md">
-
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 pb-4">
-                
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b pb-4">
                 <div>
                   <span className="text-sm text-gray-500">Order ID: #{order.id}</span>
                   <p className="font-semibold text-lg">Pemesan: {order.user.name}</p>
-                  {/* PERBAIKAN 1: Tampilkan Badge Status di sini dengan warna */}
                   <Badge className={cn("mt-2 capitalize", statusStyles[representativeStatus])}>
                     {representativeStatus}
                   </Badge>
-                </div>
 
+                </div>
                 <div className="text-left sm:text-right mt-2 sm:mt-0">
-                  <p className="text-sm text-gray-500">Tanggal: {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                  <p className="font-semibold text-lg">Total Pembayaran: Rp {new Intl.NumberFormat('id-ID').format(subtotalForOwner)}</p>
+                  <p className="text-sm text-gray-500">
+                    Tanggal: {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    <div className="flex justify-end pt-4">
+                      <Button size="sm" variant="ghost-dark" className='outline' onClick={() => handleOpenUpdateModal(order)}>Update Status & Resi</Button>
+                    </div>
+
                 </div>
               </div>
               
-              <div className="flex justify-end">
-                 <Button size="sm" variant="ghost-dark" className='outline' onClick={() => handleOpenUpdateModal(order)}>Update Status & Resi</Button>
-              </div>
-
+              {/* Rincian item di dalam pesanan */}
               <div className="space-y-2 pt-4">
                 <p className="text-sm font-medium text-gray-500">Detail Produk:</p>
                 {order.items.map(item => (
-                  <div key={item.id} className="flex items-center justify-between ml-4">
+                  <div key={item.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <img src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${item.product.image_url}`} alt={item.product.name} className="w-12 h-12 rounded object-cover"/>
+                      <Image className="w-12 h-12 rounded object-cover" src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${item.product.image_url}`} 
+                        alt={item.product.name} width={400} height={400}
+                      />
                       <div>
                         <p className="font-semibold">{item.product.name}</p>
                         <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                       </div>
                     </div>
-                    {/* PERBAIKAN 2: Hapus Badge Status dari sini */}
                   </div>
                 ))}
               </div>
+
+              {/* PERBAIKAN 2: Bagian Baru untuk Rincian Biaya Pesanan */}
+              <div className="mt-4 pt-4">
+                {/* <h4 className="text-md font-semibold mb-2">Rincian Biaya Keseluruhan</h4> */}
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <p className="text-muted-foreground">Subtotal Produk (milik Anda)</p>
+                    <p>Rp {new Intl.NumberFormat('id-ID').format(subtotalForOwner)}</p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-muted-foreground">Ongkos Kirim</p>
+                    <p>Rp {new Intl.NumberFormat('id-ID').format(order.shipping_cost)}</p>
+                  </div>
+                  {order.discount_amount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <p className="flex items-center gap-1"><Tag className="w-4 h-4"/> Diskon ({order.coupon_code})</p>
+                      <p>- Rp {new Intl.NumberFormat('id-ID').format(order.discount_amount)}</p>
+                    </div>
+                  )}
+                   <Separator className="my-2" />
+                   <div className="flex justify-between font-bold">
+                      <p>Total Dibayar Pelanggan</p>
+                      <p>Rp {new Intl.NumberFormat('id-ID').format(order.total_price)}</p>
+                   </div>
+                </div>
+              </div>
             </div>
           )
-        }) : (
-          <div className="text-center p-12 border rounded-lg bg-white">
-            <p>Belum ada pesanan masuk.</p>
-          </div>
-        )}
+        }) : <p>Belum ada pesanan masuk.</p>}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

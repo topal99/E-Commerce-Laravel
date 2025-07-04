@@ -6,6 +6,7 @@ import ProductDetails from "./ProductDetails";
 import ReviewSection from "./reviews/ReviewSection";
 import { Separator } from "./ui/separator";
 import toast, { Toaster } from "react-hot-toast";
+import Image from "next/image";
 
 interface ProductViewProps {
   initialProduct: Product;
@@ -31,16 +32,14 @@ export default function ProductView({ initialProduct }: ProductViewProps) {
     }
   }, [product.slug]);
 
+  const imageUrl = `${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`;
+
   return (
     <>
       <Toaster position="top-center" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-96 lg:h-auto">
-          <img
-            src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`}
-            alt={product.name}
-            className="max-h-full max-w-full object-contain"
-          />
+          <Image src={imageUrl} width={400} height={400} alt={product.name} className="max-h-full max-w-full object-contain"/>
         </div>
         <div>
           <ProductDetails product={product} />

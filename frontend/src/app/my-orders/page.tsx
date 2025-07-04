@@ -65,68 +65,38 @@ export default function MyOrdersPage() {
       <Toaster />
       <h1 className="text-3xl font-bold mb-6">Pesanan Saya</h1>
       
-      <div className="space-y-6">
+      <div className="space-y-4">
         {orders.length > 0 ? orders.map((order) => {
-          // Ambil status dan nomor resi dari item pertama sebagai representasi
-          const representativeItem = order.items[0];
-          const representativeStatus = representativeItem?.status || 'processing';
-          const trackingNumber = representativeItem?.tracking_number;
-          const subtotalForOwner = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+          const representativeStatus = order.items[0]?.status || 'processing';
+          const totalItems = order.items.reduce((acc, item) => acc + item.quantity, 0);
+          const totalPrice = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
           return (
-            <div key={order.id} className="bg-white p-6 rounded-lg shadow-md">
-              {/* Header Kartu Pesanan */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                <div>
-                  <span className="text-sm text-gray-500">Order ID: #{order.id}</span>
-                  <p className="font-semibold text-lg">Tanggal: {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                </div>
-                {/* Tampilkan Badge Status Utama di sini */}
-                <Badge className={cn("mt-2 sm:mt-0 capitalize", statusStyles[representativeStatus])}>
-                  {representativeStatus}
-                </Badge>
-                
-                {trackingNumber && (
-                <div className="pt-4 mb-4">
-                  <p className="text-sm font-semibold text-gray-700">Nomor Resi Pengiriman:</p>
-                  <Badge variant="outline" className="text-base mt-1">{trackingNumber}</Badge>
-                </div>
-              )}
-
-              </div>
-
-              {/* Progress Bar untuk seluruh pesanan */}
-              <div className="mb-6">
-                <OrderStatusProgress status={representativeStatus} />
-              </div>
-
-              {/* PERBAIKAN: Tampilkan Nomor Resi di level pesanan, jika ada */}
-
-              {/* Rincian Item di dalam Pesanan */}
-              <div className="space-y-4 border-t pt-4">
-                {order.items.map(item => (
-                  <div key={item.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <img src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${item.product.image_url}`} alt={item.product.name} className="w-16 h-16 rounded object-cover"/>
-                      <div>
-                        <p className="font-semibold">{item.product.name}</p>
-                        <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                      </div>
-                    </div>
+            // Setiap kartu pesanan sekarang adalah sebuah Link
+            <Link href={`/my-orders/${order.id}`} key={order.id}>
+              <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div>
+                    <p className="font-bold text-lg">Order #{order.id}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </p>
+                    <p className="text-sm text-gray-500">{totalItems} produk</p>
                   </div>
-                ))}
-              </div>
-              <div className="pt-4 mb-4">
-                <p className="font-semibold text-lg pt-4 text-right">Total Pembayaran: Rp {new Intl.NumberFormat('id-ID').format(subtotalForOwner)}</p>
+                  <div className="text-left sm:text-right mt-2 sm:mt-0">
+                    <p className="text-sm text-gray-500">Total</p>
+                    <p className="font-semibold text-lg">Rp {new Intl.NumberFormat('id-ID').format(totalPrice)}</p>
+                  </div>
+                  <div className="mt-2 sm:mt-0">
+                    <Badge className={cn("capitalize", statusStyles[representativeStatus])}>
+                      {representativeStatus}
+                    </Badge>
+                  </div>
                 </div>
-            </div>
+              </div>
+            </Link>
           )
-        }) : (
-          <div className="text-center p-12 border rounded-lg bg-white">
-            <p className="text-lg">Anda belum memiliki riwayat pesanan.</p>
-            <Link href="/" className="text-blue-500 hover:underline mt-2 inline-block">Mulai Belanja</Link>
-          </div>
-        )}
+        }) : <p>Anda belum memiliki riwayat pesanan.</p>}
       </div>
     </div>
   );
