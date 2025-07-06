@@ -59,7 +59,7 @@ export default async function HomePage({ searchParams }: { searchParams: { page?
     getLatestProducts(currentPage),
     getHomepageData()
   ]);
-
+  
   return (
     <main>
       {/* Bagian 1: Hero Slider (Carousel) */}

@@ -18,12 +18,26 @@ use App\Http\Controllers\Api\Owner\StatsController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\ShippingController; 
 use App\Http\Controllers\Api\CouponController; 
+use App\Http\Controllers\Api\ProfileController; 
+use App\Http\Controllers\Api\Auth\SocialLoginController; 
+use App\Http\Controllers\Api\StockNotificationController;
+use App\Http\Controllers\Api\Auth\EmailVerificationController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
+
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1']) // Hanya 'signed' dan 'throttle' yang diperlukan
+    ->name('verification.verify');
+
+// Rute untuk pengguna yang login tapi belum terverifikasi untuk meminta email baru.
+// Middleware 'auth:sanctum' tetap ada di sini karena pengguna harus login untuk meminta ulang.
+Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+    ->middleware(['auth:sanctum', 'throttle:6,1'])
+    ->name('verification.send');
 
 // Rute Publik
 Route::get('/products/search', [ProductController::class, 'search']);
@@ -34,15 +48,20 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category:slug}', [CategoryController::class, 'show']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [SocialLoginController::class, 'handleGoogleCallback']);
 
 // Rute yang butuh login, bisa diakses SEMUA ROLE
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/products/batch', [ProductController::class, 'getByIds']); 
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'updateProfile']);
+    Route::patch('/profile/password', [ProfileController::class, 'updatePassword']);
 });
 
 // Rute KHUSUS untuk PEMILIK TOKO
-Route::middleware(['auth:sanctum', 'role:store_owner'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:store_owner', 'verified'])->group(function () {
     Route::get('/my-products', [ProductController::class, 'myProducts']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
@@ -60,7 +79,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 });
 
 // RUTE KHUSUS UNTUK CUSTOMER
-Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:customer', 'verified'])->group(function () {
     // dd('Berhasil masuk ke grup rute Customer');
 
     Route::get('/cart', [CartController::class, 'index']);
@@ -84,4 +103,5 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::post('/shipping-options', [ShippingController::class, 'getOptions']);
     Route::post('/coupons/apply', [CouponController::class, 'apply']);
 
+    Route::post('/products/{product}/stock-notification', [StockNotificationController::class, 'subscribe']);
 });

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@toko.com',
             'password' => Hash::make('password'),
             'role' => 'admin',
+            'email_verified_at' => now(), 
         ]);
 
         // Buat Pemilik Toko
@@ -32,6 +33,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'owner@toko.com',
             'password' => Hash::make('password'),
             'role' => 'store_owner',
+            'email_verified_at' => now(), 
+
         ]);
 
         // Buat Customer
@@ -40,6 +43,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'customer@toko.com',
             'password' => Hash::make('password'),
             'role' => 'customer',
+            'email_verified_at' => now(), 
+
         ]);
 
         // Panggil seeder lain

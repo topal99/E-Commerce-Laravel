@@ -18,14 +18,12 @@
       }
     ],
     // ==========================================================
-    // BAGIAN PENTING DIMULAI DI SINI
+    // BAGIAN PENTING ADA DI SINI
     // ==========================================================
-    "baseUrl": ".", // Memberitahu TypeScript bahwa path dasar adalah direktori root
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"] // Mendefinisikan bahwa "@/*" adalah jalan pintas ke "./src/*"
+      "@/*": ["./src/*"]
     }
-    // ==========================================================
-    // BAGIAN PENTING SELESAI
     // ==========================================================
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

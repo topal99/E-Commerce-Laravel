@@ -1,154 +1,127 @@
-// src/app/register/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
+import toast, { Toaster } from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, MailCheck, Chrome } from 'lucide-react';
 
 export default function RegisterPage() {
-  // 1. TAMBAHKAN STATE UNTUK FIELD BARU
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [role, setRole] = useState('customer'); // <-- State baru, default 'customer'
-
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [role, setRole] = useState('customer');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    // Validasi sederhana di frontend
     if (password !== passwordConfirmation) {
-      setError("Password and confirmation do not match.");
+      toast.error("Password dan konfirmasi password tidak cocok.");
       return;
     }
-
+    
+    setIsLoading(true);
+    const toastId = toast.loading('Membuat akun...');
+    
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
     try {
       const res = await fetch(`${apiUrl}/api/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json', // 3. TAMBAHKAN HEADER INI
-        },
-        // 1. KIRIM SEMUA DATA YANG DIBUTUHKAN
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          password_confirmation: passwordConfirmation,
-          role,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ name, email, password, password_confirmation: passwordConfirmation, role }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
-        const validationErrors = Object.values(data.errors || {}).flat().join('\n');
-        throw new Error(validationErrors || data.message || 'Something went wrong');
+        const errorMessages = data.errors ? Object.values(data.errors).flat().join('\n') : data.message;
+        throw new Error(errorMessages || 'Gagal mendaftar.');
       }
       
-      // 2. LOGIKA SETELAH SUKSES DAFTAR
-      setSuccess('Registration successful! Redirecting to login...');
-      
-      // Arahkan ke halaman login setelah 2 detik
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
+      toast.success('Registrasi berhasil!', { id: toastId });
+      setIsSuccess(true); // Set status sukses untuk menampilkan pesan verifikasi
 
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message, { id: toastId });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Jika registrasi sudah sukses, tampilkan pesan ini, bukan form lagi.
+  if (isSuccess) {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center p-8 max-w-md mx-auto">
+                <MailCheck className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h1 className="text-2xl font-bold mb-4">Pendaftaran Berhasil!</h1>
+                <p className="text-muted-foreground">
+                  Satu langkah lagi! Kami telah mengirimkan link verifikasi ke email <strong>{email}</strong>. 
+                  Silakan cek kotak masuk (atau folder spam) untuk mengaktifkan akun Anda.
+                </p>
+                <Button asChild className="mt-6">
+                    <Link href="/login">Kembali ke Halaman Login</Link>
+                </Button>
+            </div>
+        </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-8 max-w-sm">
-      <h1 className="text-3xl font-bold mb-6 text-center">Create an Account</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <p className="text-red-500 bg-red-100 p-3 rounded">{error}</p>}
-        {success && <p className="text-green-500 bg-green-100 p-3 rounded">{success}</p>}
-        
-        {/* 1. TAMBAHKAN INPUT UNTUK NAMA */}
-        <div>
-          <label className="block mb-1">Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
-
-        {/* 1. TAMBAHKAN INPUT UNTUK KONFIRMASI PASSWORD */}
-        <div>
-          <label className="block mb-1">Confirm Password</label>
-          <input
-            type="password"
-            value={passwordConfirmation}
-            onChange={(e) => setPasswordConfirmation(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
-        
-        {/* OPSI PILIHAN ROLE BARU */}
-        <div className="space-y-2">
-          <label className="block mb-1">Register as:</label>
-          <div className="flex items-center space-x-4">
-            <label className="flex items-center">
-              <input type="radio" name="role" value="customer" checked={role === 'customer'} onChange={() => setRole('customer')} className="mr-2"/>
-              Customer
-            </label>
-            <label className="flex items-center">
-              <input type="radio" name="role" value="store_owner" checked={role === 'store_owner'} onChange={() => setRole('store_owner')} className="mr-2"/>
-              Store Owner
-            </label>
+    <div className="w-full lg:grid">
+      <Toaster position="top-center" />
+      {/* Kolom Kiri: Form Registrasi */}
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-[380px] space-y-6">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold">Buat Akun Baru</CardTitle>
+            <CardDescription>Isi data di bawah untuk memulai perjalanan belanja Anda.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Input id="name" value={name} placeholder="Nama Lengkap" onChange={(e) => setName(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Input id="email" type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Input id="password" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Input id="password_confirmation" type="password" placeholder="Konfirmasi Password" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} required />
+              </div>
+              <div className="space-y-3 pt-2">
+                <Label>Daftar sebagai:</Label>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="role" value="customer" checked={role === 'customer'} onChange={() => setRole('customer')} />
+                    Customer
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="role" value="store_owner" checked={role === 'store_owner'} onChange={() => setRole('store_owner')} />
+                    Pemilik Toko
+                  </label>
+                </div>
+              </div>
+              <Button type="submit" className="w-full bg-black text-white" disabled={isLoading}>
+                {isLoading ? <Loader2 className="animate-spin" /> : 'Daftar'}
+              </Button>
+            </form>
+          </CardContent>
+          <div className="mt-4 text-center text-sm">
+            Sudah punya akun?{" "}
+            <Link href="/login" className="underline">Login di sini</Link>
           </div>
         </div>
-
-        <button 
-          type="submit" 
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          disabled={!!success} // Nonaktifkan tombol jika sudah sukses
-        >
-          Register
-        </button>
-        <p className="text-center text-sm">
-          Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Login here
-          </Link>
-        </p>
-      </form>
+      </div>
     </div>
   );
 }

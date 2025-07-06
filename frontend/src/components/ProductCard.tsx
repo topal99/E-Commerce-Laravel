@@ -86,12 +86,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="relative">
           <Image src={imageUrl} alt={product.name} width={400} height={400} className="object-cover aspect-square w-full" />
           <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {/* {product.isNew && <Badge>Baru</Badge>}
+            
+            {/* { {product.isNew && <Badge>Baru</Badge>}
             {product.onSale && (
               <Badge variant="destructive">
                 {product.originalPrice ? `${Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%` : "Diskon"}
               </Badge>
-            )} */}
+            )} } */}
+
           </div>
           <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <Button size="icon" variant="secondary" className="rounded-full w-9 h-9" onClick={handleWishlistClick}>
@@ -114,14 +116,6 @@ export default function ProductCard({ product }: ProductCardProps) {
               <p className="text-sm text-muted-foreground line-through">Rp {new Intl.NumberFormat('id-ID').format(product.originalPrice)}</p>
             )}
           </div>
-          {/* <div className="flex-grow w-full">
-                {user && user.role === 'customer' && (
-                <Button className="w-full mt-4" variant="outline" onClick={handleAddToCartClick}>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  Tambah ke Keranjang
-                </Button>
-          )}
-          </div> */}
         </div>
       </CardContent>
     </Card>

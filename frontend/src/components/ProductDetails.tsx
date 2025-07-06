@@ -11,6 +11,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
+import NotifyStockButton from "./NotifyStockButton";
 
 interface ProductDetailsProps {
   product: Product;
@@ -92,12 +93,14 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         <Separator />
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+
             <div className="flex items-center gap-2 border rounded-md p-1">
                 <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus className="w-4 h-4" /></Button>
                 <span className="w-10 text-center font-semibold">{quantity}</span>
                 {/* PERBAIKAN: Tombol tambah dibatasi oleh stok yang tersedia */}
                 <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}><Plus className="w-4 h-4" /></Button>
             </div>
+
             <div className="flex-grow w-full">
                 {user && user.role === 'customer' && (
                   <Button size="lg" variant="ghost-dark" className="w-full text-base outline" onClick={handleAddToCart} disabled={!isInStock || isAdding}>
@@ -107,6 +110,10 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 )}
             </div>
         </div>
+                        {!isInStock && (
+                  <NotifyStockButton productId={product.id} />
+                )}
+
     </div>
   );
 }

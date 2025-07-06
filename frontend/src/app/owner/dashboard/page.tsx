@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 import toast, { Toaster } from 'react-hot-toast';
 import { DollarSign, Package, ShoppingCart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { type Product } from '@/lib/types'; // Import tipe Product
+import Image from 'next/image';
 
 // Definisikan tipe data untuk statistik yang akan diterima dari API
 interface Stats {
@@ -83,7 +84,7 @@ export default function OwnerDashboardPage() {
               {stats.best_selling_products.length > 0 ? stats.best_selling_products.map((item, index) => (
                 <li key={item.product_id} className="flex items-center gap-4">
                   <span className="font-bold text-lg text-gray-400">{index + 1}</span>
-                  <img src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${item.product.image_url}`} alt={item.product.name} className="w-12 h-12 rounded object-cover"/>
+                  <Image src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${item.product.image_url}`} width={400} height={400} alt={item.product.name} className="w-12 h-12 rounded object-cover"/>
                   <div className="flex-grow">
                     <p className="font-semibold">{item.product.name}</p>
                   </div>
@@ -105,7 +106,7 @@ export default function OwnerDashboardPage() {
             <ul className="space-y-4">
               {stats.low_stock_products.length > 0 ? stats.low_stock_products.map((product) => (
                 <li key={product.id} className="flex items-center gap-4">
-                  <img src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`} alt={product.name} className="w-12 h-12 rounded object-cover"/>
+                  <Image src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`} width={400} height={400} alt={product.name} className="w-12 h-12 rounded object-cover"/>
                   <div className="flex-grow">
                     <p className="font-semibold">{product.name}</p>
                   </div>

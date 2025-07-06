@@ -1,14 +1,12 @@
+import { type Metadata } from 'next'; // 1. Import tipe Metadata
 import { type Product } from "@/lib/types";
 import ProductView from "@/components/ProductView";
 
+// Fungsi untuk mengambil data produk (tidak ada perubahan)
 async function getProduct(slug: string): Promise<Product | null> {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     try {
-        // PERBAIKAN UTAMA: Tambahkan { cache: 'no-store' }
-        // Ini memaksa Next.js untuk selalu mengambil data baru dari API setiap kali
-        // halaman ini diminta, baik saat navigasi maupun saat refresh.
         const res = await fetch(`${apiUrl}/api/products/${slug}`, { cache: 'no-store' });
-        
         if (!res.ok) return null;
         const data = await res.json();
         return data.data;
@@ -18,7 +16,44 @@ async function getProduct(slug: string): Promise<Product | null> {
     }
 }
 
-// Komponen ini tetap menjadi Server Component yang bersih
+// ==========================================================
+// BAGIAN BARU: Fungsi generateMetadata
+// ==========================================================
+// Fungsi ini akan berjalan di server untuk membuat metadata dinamis.
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  // Ambil data produk berdasarkan slug dari URL
+  const product = await getProduct(params.slug);
+
+  // Jika produk tidak ditemukan, kembalikan metadata default
+  if (!product) {
+    return {
+      title: "Produk Tidak Ditemukan",
+      description: "Produk yang Anda cari tidak tersedia.",
+    };
+  }
+
+  // Jika produk ditemukan, buat judul dan deskripsi yang unik
+  return {
+    title: `${product.name} | Phoenix Store`, // Contoh: "Kemeja Flanel Biru | Phoenix Store"
+    description: product.description.substring(0, 160), // Ambil 160 karakter pertama dari deskripsi produk
+    // Anda juga bisa menambahkan metadata lain di sini, seperti gambar untuk social media
+    openGraph: {
+        title: `${product.name} | Phoenix Store`,
+        description: product.description.substring(0, 160),
+        images: [
+            {
+                url: `${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`,
+                width: 800,
+                height: 800,
+                alt: product.name,
+            },
+        ],
+    },
+  };
+}
+
+
+// Komponen Halaman Utama (tidak ada perubahan)
 export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
     const product = await getProduct(params.slug);
 
@@ -28,7 +63,6 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
     return (
         <div className="container mx-auto p-4 md:p-8">
-            {/* Render komponen klien dengan data awal yang dijamin selalu baru */}
             <ProductView initialProduct={product} />
         </div>
     );

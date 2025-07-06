@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -13,10 +13,11 @@ interface PaginationControlsProps {
 
 export default function PaginationControls({ currentPage, lastPage, hasNextPage, hasPrevPage }: PaginationControlsProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const handlePageChange = (page: number) => {
-    // Ambil semua query parameter yang sudah ada
+    // Ambil semua query parameter yang sudah ada (misalnya untuk filter)
     const current = new URLSearchParams(Array.from(searchParams.entries()));
 
     // Set atau update parameter 'page'
@@ -25,8 +26,8 @@ export default function PaginationControls({ currentPage, lastPage, hasNextPage,
     // Buat query string baru
     const query = current.toString();
     
-    // Arahkan ke halaman dengan query baru
-    router.push(`/?${query}`);
+    // Arahkan ke halaman dengan query baru, menggunakan path saat ini
+    router.push(`${pathname}?${query}`);
   };
 
   return (
@@ -41,7 +42,7 @@ export default function PaginationControls({ currentPage, lastPage, hasNextPage,
       </Button>
 
       <span className="text-sm font-medium">
-        Page {currentPage} of {lastPage}
+        Halaman {currentPage} dari {lastPage}
       </span>
 
       <Button

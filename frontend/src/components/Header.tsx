@@ -5,9 +5,10 @@ import Image from 'next/image';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useEffect, useState } from 'react';
-import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map } from "lucide-react";
+import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map, HistoryIcon, HeartIcon, Settings } from "lucide-react";
 import { useWishlistStore } from '@/stores/wishlistStore';
-import { useRouter } from 'next/navigation'; // <-- Import useRouter
+import { useRouter } from 'next/navigation'; 
+import Cookies from 'js-cookie';
 
 // Asumsi komponen-komponen ini ada dari shadcn/ui
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
 
 const navLinks = [
   { href: "/", label: "Beranda" },
+  { href: "/products", label: "Cari Produk" },
 ];
 
 export default function Header() {
@@ -57,11 +59,16 @@ export default function Header() {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => { setIsClient(true); }, []);
 
-  const handleLogout = () => {
+const handleLogout = () => {
     logout();
     clearCartOnLogout();
     clearWishlistOnLogout();
-  };
+    
+    router.push('/');
+
+    // PERBAIKAN: Hapus juga cookie role saat logout
+    Cookies.remove('auth_role');
+};
 
   if (!isClient) {
     return (
@@ -79,8 +86,12 @@ export default function Header() {
         {/* Grup Kiri: Logo Desktop & Menu Mobile Trigger */}
         <div className="flex items-center gap-4">
           {/* Logo untuk Desktop */}
-          <Link href="/" className="hidden md:flex items-center gap-1">
-            <Image src="/mylogo.png" alt="E-Comm Logo" width={50} height={50} className="h-10 w-10" />
+          <Link href="/" className="hidden md:flex items-center gap-2">
+          <Image src="/mylogo.png" 
+          alt="E-Comm Logo"
+          width={40}  
+          height={40}
+          priority />
             <span className="font-bold text-sm">E-Comm</span>
           </Link>
           
@@ -151,15 +162,6 @@ export default function Header() {
           {user && user.role === 'customer' && (
             <div className="flex items-center">
 
-              <Link href="/my-orders">
-                <Button variant="ghost-dark" size="icon" className="rounded-full transition-colors">
-                <ListCheck className="h-5 w-5" /><span className="sr-only">Pesanan Saya</span></Button></Link>
-
-              <Link href="/wishlist">
-                <Button variant="ghost-dark" size="icon" className="rounded-full transition-colors">
-                <Heart className="h-5 w-5" /><span className="sr-only">Wishlist</span></Button>
-                </Link>
-
               <Link href="/cart">
                 <Button variant="ghost-dark" size="icon" className=" relative rounded-full transition-colors">
                   <ShoppingCart className="h-5 w-5" />
@@ -186,7 +188,10 @@ export default function Header() {
                   <DropdownMenuSeparator />
                   {user.role === 'customer' && (
                   <>
+                    <Link href="/my-account/profile"><DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Pengaturan Akun</DropdownMenuItem></Link>
+                    <Link href="/my-orders"><DropdownMenuItem><HistoryIcon className="mr-2 h-4 w-4" />Pesanan</DropdownMenuItem></Link>
                     <Link href="/my-account/addresses"><DropdownMenuItem><Map className="mr-2 h-4 w-4" />Alamat Saya</DropdownMenuItem></Link>
+                    <Link href="/wishlist"><DropdownMenuItem><HeartIcon className="mr-2 h-4 w-4" />Disukai</DropdownMenuItem></Link>
                   </>
                   )}
                   {user.role === 'store_owner' && (

@@ -8,31 +8,39 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
     // Fungsi untuk Register User Baru
     public function register(Request $request)
     {
-        $request->validate([
+        // 1. Validasi semua input yang datang dari form
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            // Tambahkan validasi untuk role
-            'role' => 'required|string|in:customer,store_owner', // Hanya boleh 2 nilai ini
+            'role' => 'required|string|in:customer,store_owner',
         ]);
 
+        // 2. PERBAIKAN UTAMA: Gunakan data yang sudah divalidasi untuk membuat user
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role, // Simpan role yang dipilih
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
         ]);
 
-        return response()->json([ /* ... responsenya tetap sama ... */ ], 201);
+        // 3. Memicu event 'Registered' untuk mengirim email verifikasi
+        event(new Registered($user));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registrasi berhasil. Silakan cek email Anda untuk verifikasi.',
+            'data' => $user
+        ], 201);
     }
 
-    // Fungsi untuk Login User
     public function login(Request $request)
     {
         $request->validate([
@@ -40,25 +48,33 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        // Cari pengguna berdasarkan email
+        $user = User::where('email', $request->email)->first();
+
+        // Cek jika pengguna tidak ada atau password salah
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials do not match our records.'],
+                'email' => ['Kredensial yang diberikan salah.'],
             ]);
         }
+        
+        // PERBAIKAN UTAMA: Cek apakah email sudah diverifikasi
+        if (!$user->hasVerifiedEmail()) {
+            // Kirim respons error spesifik jika belum terverifikasi
+            return response()->json(['message' => 'Email Anda belum diverifikasi.'], 403);
+        }
 
-        $user = User::where('email', $request->email)->firstOrFail();
-
-        // Buat token menggunakan Sanctum
+        // Jika semua berhasil, buat token API
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'Login successful',
+            'message' => 'Login berhasil',
             'data' => [
                 'user' => $user,
                 'token' => $token,
             ]
-        ], 200);
+        ]);
     }
 
     // Fungsi untuk Logout User

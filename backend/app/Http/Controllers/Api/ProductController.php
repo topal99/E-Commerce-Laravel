@@ -7,6 +7,8 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use App\Events\ProductRestocked;
 
 class ProductController extends Controller
 {
@@ -15,15 +17,45 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        // PERBAIKAN: Ubah .get() menjadi .paginate()
-        // Kita akan menampilkan 12 produk per halaman.
-        $products = Product::with('category')
-                           ->withCount('reviews')
-                           ->withAvg('reviews', 'rating')
-                           ->latest() // Tetap urutkan dari yang terbaru
-                           ->paginate(12); // <-- KUNCI PERUBAHANNYA
+        // Mulai query builder
+        $query = Product::with('category')
+                        ->withCount('reviews')
+                        ->withAvg('reviews', 'rating');
 
-        return response()->json($products); // Langsung kirim hasil paginasi
+        // 1. Logika Filter Harga
+        if ($request->has('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+        if ($request->has('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        // 2. Logika Sorting (Mengurutkan)
+        if ($request->has('sort')) {
+            switch ($request->sort) {
+                case 'price_asc':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_desc':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'latest':
+                    $query->latest();
+                    break;
+                case 'rating':
+                    // Urutkan berdasarkan rating rata-rata, dari tertinggi
+                    $query->orderByDesc('reviews_avg_rating');
+                    break;
+            }
+        } else {
+            // Urutan default jika tidak ada parameter sort
+            $query->latest();
+        }
+
+        // 3. Paginasi
+        $products = $query->paginate(12);
+
+        return response()->json($products);
     }
 
     /**
@@ -108,6 +140,8 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        $oldStock = $product->stock;
+
         // Otorisasi: Pastikan hanya pemilik produk yang bisa mengeditnya.
         if ($request->user()->id !== $product->user_id) {
             return response()->json(['message' => 'Unauthorized.'], 403);
@@ -141,12 +175,21 @@ class ProductController extends Controller
         // LANGKAH 3: Update data di database
         $product->update($validatedData);
 
+        // 2. Logika untuk memicu event
+        Log::info("Mencoba memicu event restock. Stok Lama: {$oldStock}, Stok Baru: {$product->stock}");
+
+        if ($oldStock <= 0 && $product->stock > 0) {
+            Log::info("Kondisi terpenuhi! Memicu event ProductRestocked untuk produk ID: {$product->id}");
+            ProductRestocked::dispatch($product);
+        }
+
         // LANGKAH 4: Kirim response sukses dengan data yang sudah diupdate
         return response()->json([
             'success' => true,
             'message' => 'Product updated successfully',
             'data' => $product,
         ]);
+
     }
     
     public function destroy(Request $request, Product $product)

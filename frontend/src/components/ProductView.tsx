@@ -38,9 +38,8 @@ export default function ProductView({ initialProduct }: ProductViewProps) {
     <>
       <Toaster position="top-center" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-96 lg:h-auto">
-          <Image src={imageUrl} width={400} height={400} alt={product.name} className="max-h-full max-w-full object-contain"/>
-        </div>
+        <div className="relative aspect-square w-full">
+          <Image src={imageUrl} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"/>        </div>
         <div>
           <ProductDetails product={product} />
         </div>

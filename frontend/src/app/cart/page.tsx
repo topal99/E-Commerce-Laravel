@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useAuthStore } from '@/stores/authStore';
 
 interface ShippingOption {
   service: string;
@@ -106,7 +107,9 @@ export default function CheckoutPage() {
     const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setIsApplyingCoupon(true);
+
     const token = Cookies.get('auth_token');
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     try {
         const res = await fetch(`${apiUrl}/api/coupons/apply`, {
@@ -168,11 +171,24 @@ export default function CheckoutPage() {
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center"><Loader2 className="animate-spin" /></div>;
+   if (!isLoading && items.length === 0) {
+    return (
+      <div className="container mx-auto p-8 text-center">
+        <h1 className="text-3xl font-bold mb-4">Your cart is empty.</h1>
+        <Link href="/" className="text-blue-500 hover:underline">
+          Continue Shopping
+        </Link>
+      </div>
+    );
+  }
+
+  if (isLoading) return <div className="flex items-center justify-center mx-auto p-8" >
+    <Loader2 className="animate-spin" />
+    </div>;
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <Toaster />
+      <Toaster position="top-center" />
       <h1 className="text-3xl font-bold mb-6">Checkout</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Kolom Kiri: Alamat & Pengiriman */}
