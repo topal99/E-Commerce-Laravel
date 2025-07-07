@@ -98,7 +98,13 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         // Method show() Anda sudah benar
-        $product->load('category')
+        $product->load([
+                    'category', 
+                    'reviews.user',
+                    'questions.user',
+                    'questions.answer.user',
+                    'user:id,name,slug'
+                ])                
                 ->loadCount('reviews')
                 ->loadAvg('reviews', 'rating');
 
@@ -109,8 +115,6 @@ class ProductController extends Controller
         ], 200);
     }
     
-    // ... (Method update, destroy, dan myProducts Anda) ...
-
 // Versi BARU & BENAR
     public function myProducts(Request $request) { 
         // Tambahkan ->with('category') untuk menyertakan detail kategori
@@ -228,4 +232,22 @@ class ProductController extends Controller
         return response()->json(['data' => $products]);
     }
 
+    public function getRecommendations(Request $request, Product $product)
+    {
+        // Ambil produk dari kategori yang sama dengan produk saat ini
+        $recommendations = Product::where('category_id', $product->category_id)
+                                  // Kecualikan produk saat ini dari hasil
+                                  ->where('id', '!=', $product->id)
+                                  // Ambil secara acak
+                                  ->inRandomOrder()
+                                  // Batasi hanya 4 produk
+                                  ->limit(4)
+                                  // Sertakan juga data tambahan untuk ditampilkan di kartu produk
+                                  ->with('category')
+                                  ->withCount('reviews')
+                                  ->withAvg('reviews', 'rating')
+                                  ->get();
+        
+        return response()->json(['data' => $recommendations]);
+    }
 }

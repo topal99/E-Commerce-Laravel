@@ -92,7 +92,7 @@ class OrderController extends Controller
         }
 
         // Muat semua relasi yang dibutuhkan oleh halaman detail
-        $order->load(['items.product', 'shippingAddress']);
+        $order->load(['items.product', 'items.returnRequest', 'shippingAddress']);
 
         return response()->json(['data' => $order]);
     }

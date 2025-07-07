@@ -20,11 +20,8 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
-
+         'name', 'email', 'password', 'role', 'google_id', 'slug', 'bio' 
+        ];
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -88,4 +85,6 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(StockNotification::class);
     }
+
+    public function questions(): HasMany { return $this->hasMany(Question::class); }
 }

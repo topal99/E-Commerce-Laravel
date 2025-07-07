@@ -29,12 +29,13 @@ class DatabaseSeeder extends Seeder
 
         // Buat Pemilik Toko
         User::create([
-            'name' => 'Pemilik Toko A',
+            'name' => 'Toko Buku Aksara',
+            'slug' => 'toko-buku-aksara',
             'email' => 'owner@toko.com',
             'password' => Hash::make('password'),
             'role' => 'store_owner',
-            'email_verified_at' => now(), 
-
+            'bio' => 'Menjual berbagai macam buku fiksi dan non-fiksi original dengan harga terbaik.',
+            'email_verified_at' => now(),
         ]);
 
         // Buat Customer
@@ -44,7 +45,6 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'customer',
             'email_verified_at' => now(), 
-
         ]);
 
         // Panggil seeder lain

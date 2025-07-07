@@ -22,6 +22,11 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Auth\SocialLoginController; 
 use App\Http\Controllers\Api\StockNotificationController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
+use App\Http\Controllers\Api\StorePageController;
+use App\Http\Controllers\Api\QuestionController;
+use App\Http\Controllers\Api\Owner\QuestionManagementController;
+use App\Http\Controllers\Api\ReturnRequestController; 
+use App\Http\Controllers\Api\Owner\ReturnManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,11 +35,8 @@ use App\Http\Controllers\Api\Auth\EmailVerificationController;
 */
 
 Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-    ->middleware(['signed', 'throttle:6,1']) // Hanya 'signed' dan 'throttle' yang diperlukan
+    ->middleware(['signed', 'throttle:6,1']) 
     ->name('verification.verify');
-
-// Rute untuk pengguna yang login tapi belum terverifikasi untuk meminta email baru.
-// Middleware 'auth:sanctum' tetap ada di sini karena pengguna harus login untuk meminta ulang.
 Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
     ->middleware(['auth:sanctum', 'throttle:6,1'])
     ->name('verification.send');
@@ -50,6 +52,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [SocialLoginController::class, 'handleGoogleCallback']);
+Route::get('/products/{product}/recommendations', [ProductController::class, 'getRecommendations']);
+Route::get('/toko/{user:slug}', [StorePageController::class, 'show']);
 
 // Rute yang butuh login, bisa diakses SEMUA ROLE
 Route::middleware('auth:sanctum')->group(function () {
@@ -69,6 +73,11 @@ Route::middleware(['auth:sanctum', 'role:store_owner', 'verified'])->group(funct
     Route::get('/owner/orders', [OwnerOrderController::class, 'index']);
     Route::patch('/owner/orders/{order}/update-status', [OwnerOrderController::class, 'updateItemsStatus']);
     Route::get('/owner/stats', [StatsController::class, 'index']);
+    Route::get('/owner/questions', [QuestionManagementController::class, 'index']);
+    Route::post('/owner/questions/{question}/answer', [QuestionManagementController::class, 'storeAnswer']);
+    Route::get('/owner/returns', [ReturnManagementController::class, 'index']);
+    Route::patch('/owner/returns/{returnRequest}', [ReturnManagementController::class, 'update']);
+
 });
 
 // Rute KHUSUS untuk ADMIN
@@ -104,4 +113,7 @@ Route::middleware(['auth:sanctum', 'role:customer', 'verified'])->group(function
     Route::post('/coupons/apply', [CouponController::class, 'apply']);
 
     Route::post('/products/{product}/stock-notification', [StockNotificationController::class, 'subscribe']);
+    Route::post('/products/{product}/questions', [QuestionController::class, 'store']);
+
+    Route::post('/order-items/{orderItem}/returns', [ReturnRequestController::class, 'store']);
 });
