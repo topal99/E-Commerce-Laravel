@@ -12,6 +12,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
 import NotifyStockButton from "./NotifyStockButton";
+import Link from "next/link";
 
 interface ProductDetailsProps {
   product: Product;
@@ -71,6 +72,16 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         <Toaster position="top-center" />
         <div>
             <h1 className="text-3xl lg:text-4xl font-bold">{product.name}</h1>
+
+            {product.user && product.user.slug && (
+                <p className="text-sm text-muted-foreground mt-2">
+                    Dijual oleh: 
+                    <Link href={`/toko/${product.user.slug}`} className="text-blue-600 hover:underline ml-1">
+                        {product.user.name}
+                    </Link>
+                </p>
+            )}
+            
             <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mt-2">
                 <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (<Star key={i} className={cn("w-5 h-5", i < Math.round(rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-300")}/>))}
@@ -110,9 +121,9 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 )}
             </div>
         </div>
-                        {!isInStock && (
-                  <NotifyStockButton productId={product.id} />
-                )}
+        {!isInStock && (
+          <NotifyStockButton productId={product.id} />
+          )}
 
     </div>
   );

@@ -27,6 +27,8 @@ use App\Http\Controllers\Api\QuestionController;
 use App\Http\Controllers\Api\Owner\QuestionManagementController;
 use App\Http\Controllers\Api\ReturnRequestController; 
 use App\Http\Controllers\Api\Owner\ReturnManagementController;
+use App\Http\Controllers\Api\RegionController; 
+use App\Http\Controllers\Api\TrackingController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -95,7 +97,6 @@ Route::middleware(['auth:sanctum', 'role:customer', 'verified'])->group(function
     Route::post('/cart', [CartController::class, 'store']);
     Route::patch('/cart/{productId}', [CartController::class, 'update']);
     Route::delete('/cart/{productId}', [CartController::class, 'destroy']);
-
     Route::get('/orders/history', [OrderController::class, 'history']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
@@ -104,16 +105,18 @@ Route::middleware(['auth:sanctum', 'role:customer', 'verified'])->group(function
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist/toggle', [WishlistController::class, 'toggle']);
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
-
     Route::get('/addresses', [AddressController::class, 'index']);
     Route::post('/addresses', [AddressController::class, 'store']);
     Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
 
     Route::post('/shipping-options', [ShippingController::class, 'getOptions']);
     Route::post('/coupons/apply', [CouponController::class, 'apply']);
-
     Route::post('/products/{product}/stock-notification', [StockNotificationController::class, 'subscribe']);
     Route::post('/products/{product}/questions', [QuestionController::class, 'store']);
-
     Route::post('/order-items/{orderItem}/returns', [ReturnRequestController::class, 'store']);
+
+    Route::get('/regions/provinces', [RegionController::class, 'getProvinces']);
+    Route::get('/regions/cities', [RegionController::class, 'getCities']);
+    Route::get('/regions/districts', [RegionController::class, 'getDistricts']);
+    Route::get('/tracking/order-items/{orderItem}', [TrackingController::class, 'track']);
 });

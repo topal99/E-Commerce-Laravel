@@ -17,6 +17,7 @@ class OrderItem extends Model
         'quantity',
         'price',
         'status',
+        'courier_name',
         'tracking_number',
     ];
 

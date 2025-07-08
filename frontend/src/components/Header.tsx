@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useEffect, useState } from 'react';
-import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map, HistoryIcon, HeartIcon, Settings } from "lucide-react";
+import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map, HistoryIcon, HeartIcon, Settings, CircleQuestionMark, SendToBack } from "lucide-react";
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useRouter } from 'next/navigation'; 
 import Cookies from 'js-cookie';
@@ -202,6 +202,10 @@ const handleLogout = () => {
                         <Package className="mr-2 h-4 w-4" />Produk</DropdownMenuItem></Link>
                       <Link href="/owner/orders"><DropdownMenuItem>
                         <History className="mr-2 h-4 w-4" />Pesanan</DropdownMenuItem></Link>
+                      <Link href="/owner/qna"><DropdownMenuItem>
+                        <CircleQuestionMark className="mr-2 h-4 w-4" />Tanya Jawab</DropdownMenuItem></Link>
+                      <Link href="/owner/returns"><DropdownMenuItem>
+                        <SendToBack className="mr-2 h-4 w-4" />Pengembalian Barang</DropdownMenuItem></Link>
                     </>
                   )}
     

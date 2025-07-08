@@ -1,6 +1,8 @@
-import { type Metadata } from 'next'; // 1. Import tipe Metadata
+import { type Metadata } from 'next'; 
 import { type Product } from "@/lib/types";
 import ProductView from "@/components/ProductView";
+import RecommendedProducts from '@/components/RecommendedProducts'; 
+import { Separator } from '@/components/ui/separator';
 
 // Fungsi untuk mengambil data produk (tidak ada perubahan)
 async function getProduct(slug: string): Promise<Product | null> {
@@ -62,8 +64,16 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8">
-            <ProductView initialProduct={product} />
-        </div>
-    );
+        <>
+            <div className="container mx-auto p-4 md:p-8">
+                {/* Komponen ProductView yang menampilkan detail utama */}
+                <ProductView initialProduct={product} />
+            </div>
+
+            <Separator className="my-8" />
+
+            {/* 2. Tampilkan komponen rekomendasi di bawah, kirim ID produk saat ini */}
+            <RecommendedProducts productId={product.id} />
+        </>
+        );
 }

@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // TAMBAHKAN BLOK KONFIGURASI INI
   images: {
     remotePatterns: [
       {
@@ -11,8 +10,14 @@ const nextConfig = {
         port: '8000',
         pathname: '/storage/**',
       },
-      // Ini untuk jaga-jaga jika Anda kembali menggunakan URL Laragon
-      
+      // PERBAIKAN: Ganti 'localhost' dengan hostname Laragon Anda
+      // agar lebih sesuai dengan setup yang kita gunakan.
+      {
+        protocol: 'http',
+        hostname: 'ecomm-backend.test', // <-- Gunakan ini
+        port: '', // Dikosongkan karena Laragon tidak pakai port di URL
+        pathname: '/storage/**',
+      },
     ],
   },
 };

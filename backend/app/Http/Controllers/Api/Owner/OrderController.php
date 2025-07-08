@@ -48,6 +48,7 @@ class OrderController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:processing,shipped,delivered,cancelled',
+            'courier_name' => 'nullable|string|max:50',
             'tracking_number' => 'nullable|string|max:255',
         ]);
 
@@ -59,6 +60,7 @@ class OrderController extends Controller
               ->whereIn('product_id', $ownerProductIds)
               ->update([
                   'status' => $validated['status'],
+                  'courier_name' => $validated['courier_name'] ?? null,
                   'tracking_number' => $validated['tracking_number'] ?? null,
               ]);
 

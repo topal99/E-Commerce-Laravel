@@ -9,9 +9,11 @@ import OrderStatusProgress from '@/components/OrderStatusProgress';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Home, MapPin, Loader2, Tag } from 'lucide-react'; 
+import { Home, MapPin, Loader2, Tag, Undo2, Map, LocationEdit, Car, CarIcon } from 'lucide-react'; 
 import Image from 'next/image';
-import { Separator } from '@/components/ui/separator';
+import ReturnRequestForm from '@/components/customer/ReturnRequestForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import TrackingModal from '@/components/customer/TrackingModal';
 
 interface Address {
   id: number;
@@ -23,13 +25,18 @@ interface Address {
   province: string;
   postal_code: string;
 }
+
+interface ReturnRequest { id: number; status: string; }
+
 interface OrderItem {
   id: number;
   status: 'processing' | 'shipped' | 'delivered' | 'cancelled';
   tracking_number: string | null;
+  courier_name: string | null;
   product: Product;
   quantity: number;
   price: number;
+  return_request: ReturnRequest | null; 
 }
 
 interface Order { 
@@ -47,9 +54,19 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [selectedTrackingItem, setSelectedTrackingItem] = useState<OrderItem | null>(null);
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [selectedReturnItem, setSelectedReturnItem] = useState<OrderItem | null>(null);
+
+  const handleOpenTrackingModal = (item: OrderItem) => {
+    setSelectedTrackingItem(item);
+    setIsTrackingModalOpen(true);
+  };
 
   // Fungsi untuk mengambil detail pesanan dari API
   const fetchOrderDetails = useCallback(async () => {
@@ -99,6 +116,12 @@ export default function OrderDetailPage() {
     }
   };
 
+  // Fungsi untuk membuka modal pengembalian
+  const handleOpenReturnModal = (item: OrderItem) => {
+    setSelectedReturnItem(item);
+    setIsReturnModalOpen(true);
+  };
+  
   if (isLoading) {
     return <div className="p-8 text-center flex items-center justify-center gap-2"><Loader2 className="animate-spin" /><span>Memuat detail pesanan...</span></div>;
   }
@@ -123,6 +146,7 @@ export default function OrderDetailPage() {
         <div className="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
           <div className="pb-6">
             <h3 className="text-lg font-semibold mb-4">Produk yang Dipesan</h3>
+
             <div className="space-y-4">
               {order.items.map(item => (
                 <div key={item.id} className="flex gap-4">
@@ -132,9 +156,26 @@ export default function OrderDetailPage() {
                     <p className="font-semibold">{item.product.name}</p>
                     <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     <p className="text-sm text-gray-600">Harga: Rp {new Intl.NumberFormat('id-ID').format(item.price)}</p>
-                    {item.status === 'delivered' && (
-                      <Link href={`/products/${item.product.slug}?review=true`}><Button size="sm" variant="outline" className="mt-2">Beri Ulasan</Button></Link>
-                    )}
+                    {/* PERBAIKAN UTAMA: Tombol Aksi per Item */}
+                    <div className="mt-2">
+                      {/* Tampilkan tombol "Beri Ulasan" jika sudah diterima & belum ada ulasan */}
+                      {item.status === 'delivered' && (
+                        <Link href={`/products/${item.product.slug}?review=true`}><Button size="sm" variant="outline">Beri Ulasan</Button></Link>
+                      )}
+                      {/* Tampilkan tombol "Ajukan Pengembalian" jika sudah diterima & BELUM pernah diajukan */}
+                      {item.status === 'delivered' && !item.return_request && (
+                        <Button size="sm" variant="secondary" className="ml-2" onClick={() => handleOpenReturnModal(item)}>
+                          <Undo2 className="w-4 h-4 mr-2" />
+                          Ajukan Pengembalian
+                        </Button>
+                      )}
+
+                      {/* Tampilkan status jika sudah pernah diajukan */}
+                      {item.return_request && (
+                        <Badge className='bg-yellow-700 text-white'>Permintaan Pengembalian Diproses</Badge>
+                      )}
+                    
+                    </div>
                   </div>
                 </div>
               ))}
@@ -152,6 +193,24 @@ export default function OrderDetailPage() {
                 <p className="font-semibold text-sm">No. Resi: <Badge variant="secondary">{trackingNumber}</Badge></p>
               </div>
             )}
+            
+            <div className='fles gap-2'>
+              {order.items.map(item => (
+                <div key={item.id}>
+                    <div className="mt-2">
+                      {item.courier_name && (
+                        <p className="font-semibold text-sm">Nama Kurir: <Badge variant="secondary">{item.courier_name}</Badge></p>
+                      )}
+                      {item.tracking_number && (
+                        <Button size="lg" className="mt-2" onClick={() => handleOpenTrackingModal(item)}>
+                          <CarIcon className="h5-w-4" />
+                          Lacak Paket
+                        </Button>
+                     )}
+                    </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
@@ -179,6 +238,7 @@ export default function OrderDetailPage() {
                 <p className="text-muted-foreground">Ongkos Kirim</p>
                 <p>Rp {new Intl.NumberFormat('id-ID').format(order.shipping_cost)}</p>
               </div>
+
               {order.discount_amount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <p className="flex items-center gap-1"><Tag className="w-4 h-4"/> Diskon ({order.coupon_code})</p>
@@ -186,17 +246,47 @@ export default function OrderDetailPage() {
                 </div>
               )}
             </div>
+
             <div className="flex justify-between font-bold text-lg mt-2">
               <p>Total Pembayaran</p>
               <p>Rp {new Intl.NumberFormat('id-ID').format(order.total_price)}</p>
             </div>
           </div>
+
           {/* Tombol Aksi Dinamis */}
           <div className="mt-6 pt-6 flex justify-start">
             {representativeStatus === 'processing' && (
               <Button variant="destructive" className='bg-red-600 text-white' onClick={handleCancelOrder}>Batalkan Pesanan</Button>)}
           </div>
 
+              {/* Modal untuk menampilkan hasil pelacakan */}
+              <Dialog open={isTrackingModalOpen} onOpenChange={setIsTrackingModalOpen}>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Riwayat Perjalanan Paket</DialogTitle></DialogHeader>
+                  {selectedTrackingItem && <TrackingModal orderItem={selectedTrackingItem} />}
+                </DialogContent>
+              </Dialog>
+
+                {/* Modal untuk Form Pengembalian */}
+            <Dialog open={isReturnModalOpen} onOpenChange={setIsReturnModalOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Ajukan Pengembalian Barang</DialogTitle>
+                  <DialogDescription>
+                    Jelaskan alasan Anda mengajukan pengembalian untuk produk ini.
+                  </DialogDescription>
+                </DialogHeader>
+                {selectedReturnItem && (
+                  <ReturnRequestForm
+                    orderItem={selectedReturnItem}
+                    onSubmitted={() => {
+                      setIsReturnModalOpen(false);
+                      fetchOrderDetails(); // Muat ulang data untuk melihat status baru
+                    }}
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
         </div>
       </div>
     </div>

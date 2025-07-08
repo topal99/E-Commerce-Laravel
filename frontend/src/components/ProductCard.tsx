@@ -5,7 +5,7 @@ import Image from "next/image";
 import { type Product } from "@/lib/types";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
-import { useWishlistStore } from "@/stores/wishlistStore"; // <-- Import Wishlist Store
+import { useWishlistStore } from "@/stores/wishlistStore";
 import toast from "react-hot-toast";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 
@@ -21,7 +21,6 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
 
-  
   const { addToCart } = useCartStore();
   const { token, user } = useAuthStore();
   const { wishlistedProductIds, toggleWishlist } = useWishlistStore(); // <-- Ambil state & fungsi wishlist
@@ -84,7 +83,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       <CardContent className="p-0 flex-grow flex flex-col">
         <div className="relative">
-          <Image src={imageUrl} alt={product.name} width={400} height={400} className="object-cover aspect-square w-full" />
+          <Image src={imageUrl} alt={product.name} width={400} height={400} className="object-cover aspect-square w-full group-hover:opacity-75" />
           <div className="absolute top-3 left-3 flex flex-col gap-2">
             
             {/* { {product.isNew && <Badge>Baru</Badge>}

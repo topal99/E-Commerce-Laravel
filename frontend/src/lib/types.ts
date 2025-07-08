@@ -5,11 +5,29 @@ export interface Review {
     rating: number;
     comment: string;
     created_at: string;
-    // Setiap ulasan memiliki data pengguna yang membuatnya
     user: {
         id: number;
         name: string;
     };
+}
+
+interface ProductSummary {
+    id: number;
+    name: string;
+}
+
+export interface Answer {
+    id: number;
+    answer_text: string;
+    user: { name: string; }; 
+}
+
+export interface Question {
+    id: number;
+    question_text: string;
+    user: { name: string; }; 
+    answer: Answer | null;
+    product: ProductSummary; 
 }
 
 export interface ProductVariant {
@@ -27,23 +45,18 @@ export interface Product {
     slug: string;
     description: string;
     price: number;
-    stock: number; // Stok utama produk
+    stock: number; 
     image_url: string; 
-    
-    // PERBAIKAN DI SINI: Tambahkan 'id' ke dalam tipe kategori
+    questions?: Question[]; 
+
     category?: {
-        id: number; // <-- Tambahkan ini
+        id: number; 
         name: string;
     };
     
-    // PERBAIKAN DI SINI: Tambahkan properti 'reviews'
-    reviews?: Review[]; // <-- Ini adalah array dari objek Review
-    
+    reviews?: Review[]; 
     reviews_avg_rating?: number;
-    reviews_count?: number;
-    
-    // Properti ini bisa dihapus jika Anda tidak lagi menggunakan varian
-    variants?: ProductVariant[]; 
-    
+    reviews_count?: number;    
     originalPrice?: number;
+    user?: { name: string; slug: string; };
 }

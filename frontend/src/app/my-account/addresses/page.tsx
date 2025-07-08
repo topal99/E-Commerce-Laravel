@@ -102,7 +102,7 @@ export default function AddressesPage() {
             <DialogHeader>
               <DialogTitle>Tambah Alamat Baru</DialogTitle>
               <DialogDescription>
-                Masukkan detail alamat pengiriman Anda.
+                Masukkan detail alamat pengiriman Anda. Pastikan semua informasi sudah benar.
               </DialogDescription>
             </DialogHeader>
             {/* Komponen form dipanggil di dalam modal */}
