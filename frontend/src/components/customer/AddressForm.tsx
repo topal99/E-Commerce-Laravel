@@ -10,112 +10,130 @@ import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 import { Loader2 } from 'lucide-react';
 
-// Tipe data baru sesuai respons API Biteship
-interface Area { id: string; name: string; }
+// Tipe data untuk props yang diterima
+interface AddressFormProps {
+  onSaveSuccess: () => void;
+  initialData?: any; // Menggunakan 'any' untuk fleksibilitas mode edit
+}
 
-const fetchWithAuth = async (url: string) => {
-  const token = Cookies.get('auth_token');
-  return fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json', // <-- Header paling penting untuk mencegah redirect
-      'Authorization': `Bearer ${token}`,
-    },
+// Tipe data untuk wilayah dari API
+interface Area {
+  id: string;
+  name: string;
+}
+
+export default function AddressForm({ onSaveSuccess, initialData }: AddressFormProps) {
+  // PERBAIKAN 1: Gunakan satu state object untuk semua data form
+  const [formData, setFormData] = useState({
+    label: 'Rumah',
+    recipient_name: '',
+    phone_number: '',
+    province: '',
+    city: '',
+    full_address: '', // Ini khusus untuk nama jalan, nomor rumah, dll.
+    postal_code: '',
   });
-};
 
-export default function AddressForm({ onSaveSuccess }: { onSaveSuccess: () => void }) {
   const [isSaving, setIsSaving] = useState(false);
-  const [recipientName, setRecipientName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [fullAddress, setFullAddress] = useState('');
-  const [postalCode, setPostalCode] = useState('');
 
+  // State untuk dropdown wilayah
   const [provinces, setProvinces] = useState<Area[]>([]);
   const [cities, setCities] = useState<Area[]>([]);
-  const [districts, setDistricts] = useState<Area[]>([]);
-
-  const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-
   const [isCitiesLoading, setIsCitiesLoading] = useState(false);
-  const [isDistrictsLoading, setIsDistrictsLoading] = useState(false);
+
+  // State untuk menyimpan ID yang dipilih, untuk memicu fetch berikutnya
+  const [selectedProvinceId, setSelectedProvinceId] = useState('');
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const token = Cookies.get('auth_token');
 
-  // Ambil daftar provinsi
+  // Mengisi form dengan data awal jika dalam mode edit
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        label: initialData.label || 'Rumah',
+        recipient_name: initialData.recipient_name || '',
+        phone_number: initialData.phone_number || '',
+        full_address: initialData.full_address || '',
+        city: initialData.city || '',
+        province: initialData.province || '',
+        postal_code: initialData.postal_code || '',
+      });
+      // Di sini bisa ditambahkan logika untuk pre-select provinsi/kota jika mode edit
+    }
+  }, [initialData]);
+
+  // Ambil daftar provinsi saat komponen dimuat
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const res = await fetchWithAuth(`${apiUrl}/api/regions/provinces`);
+        const res = await fetch(`${apiUrl}/api/regions/provinces`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+        });
         if (!res.ok) throw new Error("Gagal memuat provinsi.");
         const data = await res.json();
         setProvinces(data);
-      } catch (error) { toast.error("Gagal memuat daftar provinsi."); }
+      } catch (error) {
+        toast.error("Gagal memuat daftar provinsi.");
+      }
     };
     fetchProvinces();
-  }, [apiUrl]);
+  }, [apiUrl, token]);
 
   // Ambil daftar kota saat provinsi berubah
   useEffect(() => {
-    if (!selectedProvince) return;
+    if (!selectedProvinceId) return;
+
     const fetchCities = async () => {
       setIsCitiesLoading(true);
-      setCities([]); setSelectedCity(''); setDistricts([]); setSelectedDistrict('');
+      setCities([]); // Kosongkan daftar kota lama
+      setFormData(prev => ({ ...prev, city: '' })); // Reset pilihan kota di form
+      
       try {
-        const res = await fetchWithAuth(`${apiUrl}/api/regions/cities?province_name=${selectedProvince}`);
+        const res = await fetch(`${apiUrl}/api/regions/cities?province_id=${selectedProvinceId}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+        });
         if (!res.ok) throw new Error("Gagal memuat kota.");
         const data = await res.json();
         setCities(data);
-      } catch (error) { toast.error("Gagal memuat daftar kota."); } 
-      finally { setIsCitiesLoading(false); }
+      } catch (error) {
+        toast.error("Gagal memuat daftar kota.");
+      } finally {
+        setIsCitiesLoading(false);
+      }
     };
     fetchCities();
-  }, [selectedProvince, apiUrl]);
+  }, [selectedProvinceId, apiUrl, token]);
 
-  // Ambil daftar kecamatan saat kota berubah
-  useEffect(() => {
-    if (!selectedCity) return;
-    const fetchDistricts = async () => {
-      setIsDistrictsLoading(true);
-      setDistricts([]); setSelectedDistrict('');
-      try {
-        const res = await fetchWithAuth(`${apiUrl}/api/regions/districts?city_name=${selectedCity}`);
-        if (!res.ok) throw new Error("Gagal memuat kecamatan.");
-        const data = await res.json();
-        setDistricts(data);
-      } catch (error) { toast.error("Gagal memuat daftar kecamatan."); } 
-      finally { setIsDistrictsLoading(false); }
-    };
-    fetchDistricts();
-  }, [selectedCity, apiUrl]);
+  // PERBAIKAN 2: Satu fungsi untuk menangani semua perubahan input teks
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    
-    const formData = {
-      label: 'Rumah',
-      recipient_name: recipientName,
-      phone_number: phoneNumber,
-      full_address: fullAddress,
-      province: selectedProvince,
-      city: selectedCity,
-      postal_code: postalCode,
-    };
 
     try {
-      const token = Cookies.get('auth_token');
-      const res = await fetch(`${apiUrl}/api/addresses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(formData),
+      const res = await fetch(`${apiUrl}/api/addresses${initialData ? `/${initialData.id}` : ''}`, {
+        method: initialData ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData), // Kirim formData langsung
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Gagal menyimpan alamat.');
-      toast.success("Alamat baru berhasil disimpan!");
-      onSaveSuccess();
+      if (!res.ok) {
+        const errorMessages = data.errors ? Object.values(data.errors).flat().join('\n') : data.message;
+        throw new Error(errorMessages || 'Gagal menyimpan alamat.');
+      }
+      
+      toast.success(`Alamat berhasil ${initialData ? 'diperbarui' : 'disimpan'}!`);
+      onSaveSuccess(); // Panggil fungsi callback dari induk
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -125,40 +143,44 @@ export default function AddressForm({ onSaveSuccess }: { onSaveSuccess: () => vo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-      {/* ... (Field Nama Penerima & Telepon) ... */}
-      <div><Label>Nama Penerima</Label><Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} required /></div>
-      <div><Label>Nomor Telepon</Label><Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required /></div>
-
-      {/* Dropdown Provinsi */}
+      <div><Label htmlFor="recipient_name">Nama Penerima</Label><Input name="recipient_name" value={formData.recipient_name} onChange={handleChange} required /></div>
+      <div><Label htmlFor="phone_number">Nomor Telepon</Label><Input name="phone_number" value={formData.phone_number} onChange={handleChange} required /></div>
+      
       <div>
         <Label>Provinsi</Label>
-        <Select value={selectedProvince} onValueChange={setSelectedProvince} required>
+        <Select 
+          value={selectedProvinceId} // Select dikontrol oleh ID
+          onValueChange={(value) => {
+            setSelectedProvinceId(value); // Set ID untuk fetch
+            const provinceName = provinces.find(p => p.id === value)?.name || '';
+            setFormData(prev => ({...prev, province: provinceName})); // Simpan nama ke form
+          }}
+          required
+        >
           <SelectTrigger><SelectValue placeholder="Pilih Provinsi..." /></SelectTrigger>
-          <SelectContent>{provinces.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
+          <SelectContent>{provinces.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
-      {/* Dropdown Kota/Kabupaten */}
       <div>
         <Label>Kota/Kabupaten</Label>
-        <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedProvince || isCitiesLoading} required>
+        <Select 
+          value={formData.city} // Select dikontrol oleh nama
+          onValueChange={(value) => setFormData(prev => ({...prev, city: value}))} 
+          disabled={!selectedProvinceId || isCitiesLoading} required>
           <SelectTrigger><SelectValue placeholder={isCitiesLoading ? "Memuat..." : "Pilih Kota/Kabupaten..."} /></SelectTrigger>
           <SelectContent>{cities.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
-
-      {/* Dropdown Kecamatan */}
+      
       <div>
-        <Label>Kecamatan</Label>
-        <Select value={selectedDistrict} onValueChange={setSelectedDistrict} disabled={!selectedCity || isDistrictsLoading} required>
-          <SelectTrigger><SelectValue placeholder={isDistrictsLoading ? "Memuat..." : "Pilih Kecamatan..."} /></SelectTrigger>
-          <SelectContent>{districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}</SelectContent>
-        </Select>
+        <Label htmlFor="full_address">Alamat Lengkap (Nama Jalan, No. Rumah, Kecamatan, dll.)</Label>
+        <Textarea name="full_address" value={formData.full_address} onChange={handleChange} placeholder="Contoh: Jl. Merdeka No. 123, Kel. Sejahtera, Kec. Makmur" required />
       </div>
-
-      {/* Field Alamat Lengkap & Kode Pos */}
-      <div><Label>Alamat Lengkap (Nama Jalan, No. Rumah, dll)</Label><Textarea value={fullAddress} onChange={(e) => setFullAddress(e.target.value)} required /></div>
-      <div><Label>Kode Pos</Label><Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required /></div>
+      
+      <div><Label htmlFor="postal_code">Kode Pos</Label><Input name="postal_code" value={formData.postal_code} onChange={handleChange} required /></div>
+      
+      <div><Label htmlFor="label">Label Alamat</Label><Input name="label" value={formData.label} onChange={handleChange} placeholder="Contoh: Rumah, Kantor" required /></div>
 
       <Button type="submit" disabled={isSaving} className="w-full">
         {isSaving ? <Loader2 className="animate-spin" /> : 'Simpan Alamat'}

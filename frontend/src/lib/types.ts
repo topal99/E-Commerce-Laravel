@@ -45,18 +45,24 @@ export interface Product {
     slug: string;
     description: string;
     price: number;
-    stock: number; 
+    stock: number;
     image_url: string; 
-    questions?: Question[]; 
-
+    
     category?: {
-        id: number; 
+        id: number;
         name: string;
     };
     
-    reviews?: Review[]; 
+    reviews?: Review[];
     reviews_avg_rating?: number;
-    reviews_count?: number;    
+    reviews_count?: number;
+    
+    // PERBAIKAN UTAMA: Tambahkan properti 'user' (pemilik toko) di sini
+    user?: {
+        id: number;
+        name: string;
+        slug: string;
+    };
+
     originalPrice?: number;
-    user?: { name: string; slug: string; };
 }

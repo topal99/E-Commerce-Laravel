@@ -13,10 +13,13 @@ class CartController extends Controller
     // Mendapatkan semua isi keranjang milik user
     public function index(Request $request)
     {
-        // Laravel mencoba mengambil item keranjang DAN detail produknya
-        $cartItems = $request->user()->carts()->with('product')->get();
+        $cartItems = $request->user()->carts()
+            // PERBAIKAN: Muat relasi produk DAN user (pemilik toko) dari produk tersebut
+            ->with(['product.user:id,name,slug']) 
+            ->get();
+            
         return response()->json(['data' => $cartItems]);
-    }
+    }    
     
     // Menambahkan produk ke keranjang
     public function store(Request $request)

@@ -109,6 +109,7 @@ Route::middleware(['auth:sanctum', 'role:customer', 'verified'])->group(function
     Route::get('/addresses', [AddressController::class, 'index']);
     Route::post('/addresses', [AddressController::class, 'store']);
     Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
+    Route::put('/addresses/{address}', [AddressController::class, 'update']);
 
     Route::post('/shipping-options', [ShippingController::class, 'getOptions']);
     Route::post('/coupons/apply', [CouponController::class, 'apply']);

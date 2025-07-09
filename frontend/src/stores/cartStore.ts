@@ -18,6 +18,7 @@ interface CartItem {
 
 interface CartState {
   items: CartItem[];
+  isLoading: boolean;
   fetchCart: () => Promise<void>;
   addToCart: (productId: number, quantity?: number) => Promise<void>; 
   removeFromCart: (productId: number) => Promise<void>;
@@ -48,22 +49,20 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
+  isLoading: true,
   
-  /**
-   * Mengambil data keranjang terbaru dari server dan memperbarui state.
-   */
   fetchCart: async () => {
+    set({ isLoading: true }); // Mulai loading
     try {
       const res = await fetchWithAuth(`${API_URL}/api/cart`);
-      if (!res.ok) throw new Error('Gagal mengambil data keranjang dari server.');
-      
+      if (!res.ok) throw new Error('Gagal mengambil data keranjang.');
       const { data } = await res.json();
-      // Set state dengan data yang diterima, atau array kosong jika tidak ada data
       set({ items: data || [] });
     } catch (error) {
       console.error('Fetch Cart Error:', error);
-      // Jika terjadi error (misalnya token expired), kosongkan keranjang di UI
       set({ items: [] });
+    } finally {
+      set({ isLoading: false }); // Selesaikan loading
     }
   },
 
