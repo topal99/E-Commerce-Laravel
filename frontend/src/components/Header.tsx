@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useEffect, useState } from 'react';
-import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map, HistoryIcon, HeartIcon, Settings, CircleQuestionMark, SendToBack } from "lucide-react";
+import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map, HistoryIcon, HeartIcon, Settings, CircleQuestionMark, SendToBack, Coins } from "lucide-react";
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useRouter } from 'next/navigation'; 
 import Cookies from 'js-cookie';
@@ -189,7 +189,8 @@ const handleLogout = () => {
                   {user.role === 'customer' && (
                   <>
                     <Link href="/my-account/profile"><DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Pengaturan Akun</DropdownMenuItem></Link>
-                    <Link href="/my-orders"><DropdownMenuItem><HistoryIcon className="mr-2 h-4 w-4" />Pesanan</DropdownMenuItem></Link>
+                    <Link href="/my-account/points"><DropdownMenuItem><Coins className="mr-2 h-4 w-4" />Poin Saya</DropdownMenuItem></Link>
+                    <Link href="/my-orders"><DropdownMenuItem><HistoryIcon className="mr-2 h-4 w-4" />Riwayat Pesanan</DropdownMenuItem></Link>
                     <Link href="/my-account/addresses"><DropdownMenuItem><Map className="mr-2 h-4 w-4" />Alamat Saya</DropdownMenuItem></Link>
                     <Link href="/wishlist"><DropdownMenuItem><HeartIcon className="mr-2 h-4 w-4" />Disukai</DropdownMenuItem></Link>
                   </>

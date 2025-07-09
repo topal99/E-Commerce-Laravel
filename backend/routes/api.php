@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\ReturnRequestController;
 use App\Http\Controllers\Api\Owner\ReturnManagementController;
 use App\Http\Controllers\Api\RegionController; 
 use App\Http\Controllers\Api\TrackingController; 
+use App\Http\Controllers\Api\PointsController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -119,4 +120,7 @@ Route::middleware(['auth:sanctum', 'role:customer', 'verified'])->group(function
     Route::get('/regions/cities', [RegionController::class, 'getCities']);
     Route::get('/regions/districts', [RegionController::class, 'getDistricts']);
     Route::get('/tracking/order-items/{orderItem}', [TrackingController::class, 'track']);
+    
+    Route::get('/points/history', [PointsController::class, 'history']);
+    Route::post('/points/redeem', [PointsController::class, 'redeem']);
 });

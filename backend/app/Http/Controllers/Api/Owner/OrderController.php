@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
+use App\Events\OrderDelivered;
 
 class OrderController extends Controller
 {
@@ -63,6 +64,10 @@ class OrderController extends Controller
                   'courier_name' => $validated['courier_name'] ?? null,
                   'tracking_number' => $validated['tracking_number'] ?? null,
               ]);
+              
+        if ($validated['status'] === 'delivered') {
+            OrderDelivered::dispatch($order);
+        }
 
         return response()->json([
             'success' => true,

@@ -2,12 +2,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import Cookies from 'js-cookie';
 
-// Definisikan tipe User
+// Definisikan tipe User dengan properti points
 interface User {
   id: number;
   name: string;
   email: string;
   role: 'admin' | 'store_owner' | 'customer';
+  points?: number; 
 }
 
 interface AuthState {
@@ -15,8 +16,9 @@ interface AuthState {
   user: User | null;
   setAuth: (token: string, user: User) => void;
   logout: () => void;
-  // Fungsi baru untuk memperbarui profil pengguna
   updateUserProfile: (newProfileData: Partial<User>) => void;
+  // Fungsi baru untuk memperbarui poin pengguna
+  updateUserPoints: (newPoints: number) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,16 +28,20 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       setAuth: (token, user) => set({ token, user }),
       logout: () => {
-        // Hapus juga cookie saat logout
         Cookies.remove('auth_token');
         Cookies.remove('auth_role');
         set({ token: null, user: null });
       },
-      // Implementasi fungsi baru
       updateUserProfile: (newProfileData) =>
         set((state) => ({
-          // Gabungkan data user yang lama dengan data profil yang baru
           user: state.user ? { ...state.user, ...newProfileData } : null,
+        })),
+      
+      // Implementasi fungsi baru untuk poin
+      updateUserPoints: (newPoints) =>
+        set((state) => ({
+            // Perbarui hanya properti 'points' dari user yang ada
+            user: state.user ? { ...state.user, points: newPoints } : null,
         })),
     }),
     {

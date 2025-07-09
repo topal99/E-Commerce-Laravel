@@ -7,6 +7,7 @@ import ProductCard from '@/components/ProductCard';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function WishlistPage() {
     const { wishlistedProductIds, fetchWishlist } = useWishlistStore();
@@ -62,9 +63,9 @@ export default function WishlistPage() {
         fetchProductDetails();
     }, [fetchProductDetails]);
 
-    if (isLoading) {
-        return <div className="container mx-auto p-8 text-center">Memuat wishlist Anda...</div>;
-    }
+  if (isLoading) {
+    return <div className="p-8 text-center flex justify-center items-center gap-2"><Loader2 className="animate-spin"/> Memuat...</div>;
+  }
 
     return (
         <div className="container mx-auto p-4 md:p-8">
