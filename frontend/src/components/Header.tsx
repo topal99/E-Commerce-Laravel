@@ -4,11 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image'; 
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
-import { useEffect, useState } from 'react';
-import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ListCheck, Heart, GitGraph, SatelliteDishIcon, ChartBar, Map, HistoryIcon, HeartIcon, Settings, CircleQuestionMark, SendToBack, Coins } from "lucide-react";
+import { useEffect, useState, useRef} from 'react';
+import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, History, ChartBar, HistoryIcon, HeartIcon, Settings, CircleQuestionMark, SendToBack, Coins } from "lucide-react";
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useRouter } from 'next/navigation'; 
 import Cookies from 'js-cookie';
+import SearchSuggestions from './SearchSuggestions'; // Import komponen baru
 
 // Asumsi komponen-komponen ini ada dari shadcn/ui
 import { Button } from "@/components/ui/button";
@@ -28,38 +29,96 @@ const navLinks = [
   { href: "/products", label: "Cari Produk" },
 ];
 
+// Komponen baru untuk Search Bar agar bisa digunakan kembali
+const SearchBar = ({ onSearchSubmit, searchTerm, setSearchTerm, onFocus }: {
+    onSearchSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    searchTerm: string;
+    setSearchTerm: (value: string) => void;
+    onFocus: () => void;
+}) => (
+    <form onSubmit={onSearchSubmit}>
+        <div className="relative">
+            <Input 
+                type="search" 
+                placeholder="Cari produk..." 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={onFocus}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        </div>
+    </form>
+);
+
+
 export default function Header() {
   const { user, token, logout } = useAuthStore();
   const { items, fetchCart, clearCartOnLogout } = useCartStore();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { fetchWishlist, clearWishlistOnLogout } = useWishlistStore();
-  
-  // === LOGIKA BARU UNTUK PENCARIAN ===
-  const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Mencegah reload halaman
-    if (!searchTerm.trim()) return; // Jangan cari jika input kosong
-    
-    router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-    // Tutup menu mobile jika pencarian dilakukan dari sana
-    if (isMobileMenuOpen) {
-        setIsMobileMenuOpen(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // State untuk pencarian
+  const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Efek untuk fetch autocomplete dengan debouncing
+  useEffect(() => {
+    if (searchTerm.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
+    setShowSuggestions(true);
+    setIsSearching(true);
+    const handler = setTimeout(async () => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      try {
+        const res = await fetch(`${apiUrl}/api/products/autocomplete?q=${searchTerm}`);
+        const data = await res.json();
+        setSuggestions(data.data || []);
+      } catch (error) { console.error("Gagal fetch autocomplete:", error); setSuggestions([]); }
+      finally { setIsSearching(false); }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Efek untuk menutup dropdown saat klik di luar
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [searchContainerRef]);
+
+  // Satu fungsi untuk menangani submit pencarian
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    setShowSuggestions(false);
+    router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+    if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+  };
+  
+  const handleSuggestionClick = () => {
+    setSearchTerm('');
+    setShowSuggestions(false);
+    if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
-  useEffect(() => {
-    if (token) {
-      fetchCart();
-      fetchWishlist();
-    }
-  }, [token, fetchCart, fetchWishlist]);
-
-  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { if (token) { fetchCart(); fetchWishlist(); } }, [token, fetchCart, fetchWishlist]);
   useEffect(() => { setIsClient(true); }, []);
 
-const handleLogout = () => {
+  const handleLogout = () => {
     logout();
     clearCartOnLogout();
     clearWishlistOnLogout();
@@ -86,12 +145,12 @@ const handleLogout = () => {
         {/* Grup Kiri: Logo Desktop & Menu Mobile Trigger */}
         <div className="flex items-center gap-4">
           {/* Logo untuk Desktop */}
-          <Link href="/" className="hidden md:flex items-center gap-2">
+          <Link href="/" className="hidden md:flex items-center gap-2 ">
           <Image src="/mylogo.png" 
           alt="E-Comm Logo"
           width={40}  
           height={40}
-          priority />
+          priority={false} />
             <span className="font-bold text-sm">E-Comm</span>
           </Link>
           
@@ -104,16 +163,30 @@ const handleLogout = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-0">
-              <div className="flex flex-col h-full">
                
-                {/* Search Bar dipindahkan ke dalam menu mobile */}
-                <div className="p-4 border-b">
-                   <form onSubmit={handleSearch}>
-                    <div className="relative">
-                      <Input type="search" placeholder="Cari produk..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    </div>
-                   </form>
+              {/* Grup Kanan */}
+              <div className="flex items-center justify-end gap-2">
+                {/* Search Bar Desktop dengan Autocomplete */}
+                <div className="relative w-full max-w-xs hidden md:block" ref={searchContainerRef}>
+                  <form onSubmit={handleSearchSubmit}>
+                    <Input 
+                      type="search" 
+                      placeholder="Cari produk..." 
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onFocus={() => { if (searchTerm.length > 1) setShowSuggestions(true) }}
+                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  </form>
+                  {/* Tampilkan komponen saran hanya jika showSuggestions true */}
+                  {showSuggestions && (
+                    <SearchSuggestions 
+                      suggestions={suggestions} 
+                      isLoading={isSearching}
+                      onSuggestionClick={handleSuggestionClick} 
+                    />
+                  )}
                 </div>
                 
                 <nav className="flex-1 flex flex-col gap-4 p-4">
@@ -152,11 +225,21 @@ const handleLogout = () => {
 
         {/* Grup Kanan: Ikon & Aksi */}
         <div className="flex items-center justify-end gap-2">
-
-           <form onSubmit={handleSearch} className="relative w-full max-w-xs hidden md:block">
-            <Input type="search" placeholder="Cari produk..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          </form>
+          <div className="relative w-full max-w-xs md:block ml-2" ref={searchContainerRef}>
+            <SearchBar 
+                onSearchSubmit={handleSearchSubmit} 
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                onFocus={() => { if (searchTerm.length > 1) setShowSuggestions(true) }}
+            />
+            {showSuggestions && (
+              <SearchSuggestions 
+                suggestions={suggestions} 
+                isLoading={isSearching}
+                onSuggestionClick={handleSuggestionClick} 
+              />
+            )}
+          </div>
 
           {/* Ikon Aksi untuk Customer */}
           {user && user.role === 'customer' && (

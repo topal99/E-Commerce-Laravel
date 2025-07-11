@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
-// Definisikan tipe data yang diterima oleh form ini
 interface Category { id: number; name: string; }
 interface ProductFormProps {
   onSave: (formData: FormData) => Promise<void>;
   isSaving: boolean;
   initialData?: Product | null;
-  categories: Category[]; // <-- Pastikan prop 'categories' didefinisikan di sini
+  categories: Category[];
 }
 
 export default function ProductForm({ onSave, isSaving, initialData, categories }: ProductFormProps) {
@@ -22,9 +22,11 @@ export default function ProductForm({ onSave, isSaving, initialData, categories 
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [image, setImage] = useState<File | null>(null);
   
-  // Mengisi form dengan data awal jika dalam mode edit
+  // State terpisah untuk setiap jenis gambar
+  const [mainImage, setMainImage] = useState<File | null>(null);
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
+
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
@@ -42,17 +44,41 @@ export default function ProductForm({ onSave, isSaving, initialData, categories 
     }
   }, [initialData]);
 
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      // Ubah FileList menjadi Array dan simpan ke state
+      setGalleryImages(Array.from(e.target.files));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validasi: Gambar utama wajib ada saat membuat produk baru
+    if (!initialData && !mainImage) {
+        alert("Gambar utama wajib diisi.");
+        return;
+    }
+
     const formData = new FormData();
     formData.append('name', name);
     formData.append('description', description);
     formData.append('price', price);
     formData.append('stock', stock);
     formData.append('category_id', categoryId);
-    if (image) {
-      formData.append('image', image);
+    
+    // Lampirkan gambar utama jika ada
+    if (mainImage) {
+      formData.append('image', mainImage);
     }
+    
+    // Lampirkan setiap gambar galeri jika ada
+    if (galleryImages.length > 0) {
+      galleryImages.forEach((file) => {
+        formData.append('gallery_images[]', file); // '[]' penting untuk PHP
+      });
+    }
+    
     if (initialData) {
         formData.append('_method', 'PUT');
     }
@@ -61,6 +87,28 @@ export default function ProductForm({ onSave, isSaving, initialData, categories 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+        <Separator />
+
+      <div>
+        <Label htmlFor="image" className="font-semibold">Gambar Utama (Wajib)</Label>
+        <p className="text-xs text-muted-foreground mb-2">Ini akan menjadi gambar sampul produk Anda.</p>
+        <Input id="image" type="file" onChange={(e) => setMainImage(e.target.files ? e.target.files[0] : null)} />
+        {initialData?.image_url && !mainImage && <p className="text-sm mt-2">Gambar saat ini: {initialData.image_url.split('/')[1]}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="gallery_images" className="font-semibold">Gambar Galeri (Opsional)</Label>
+        <p className="text-xs text-muted-foreground mb-2">Pilih beberapa gambar untuk menampilkan produk dari berbagai sudut.</p>
+        <Input id="gallery_images" type="file" multiple onChange={handleGalleryChange} />
+        {/* Tampilkan preview nama file yang dipilih */}
+        {galleryImages.length > 0 && (
+            <div className="mt-2 text-xs text-muted-foreground">
+                {galleryImages.length} gambar dipilih: {galleryImages.map(f => f.name).join(', ')}
+            </div>
+        )}
+      </div>
+
+      <Separator />
       <div>
         <Label htmlFor="name">Nama Produk</Label>
         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -68,11 +116,6 @@ export default function ProductForm({ onSave, isSaving, initialData, categories 
       <div>
         <Label htmlFor="description">Deskripsi</Label>
         <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="image">Gambar Produk {initialData ? '(Opsional)' : ''}</Label>
-        <Input id="image" type="file" onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)} />
-        {initialData?.image_url && !image && <p className="text-sm mt-2">Gambar saat ini: {initialData.image_url.split('/')[1]}</p>}
       </div>
       <div>
         <Label htmlFor="category_id">Kategori</Label>

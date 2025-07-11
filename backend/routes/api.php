@@ -45,6 +45,7 @@ Route::post('/email/verification-notification', [EmailVerificationController::cl
     ->name('verification.send');
 
 // Rute Publik
+Route::get('/products/autocomplete', [ProductController::class, 'autocomplete']);
 Route::get('/products/search', [ProductController::class, 'search']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product:slug}', [ProductController::class, 'show']);

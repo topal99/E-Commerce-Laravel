@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Category; // <-- Import Category
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str; // <-- Import Str
+use App\Models\Product;
 
 class ProductFactory extends Factory
 {
@@ -41,5 +42,25 @@ class ProductFactory extends Factory
             'category_id' => !empty($categoryIds) ? fake()->randomElement($categoryIds) : null,
             'image_url' => 'products/' . fake()->randomElement($productImages),
         ];
+    }
+
+    public function configure()
+    {
+        return $this->afterCreating(function (Product $product) {
+            // Daftar gambar contoh untuk galeri
+            $galleryImages = [
+                'products/baju2.jpg',
+                'products/sepatu1.png',
+                'products/tas1.webp',
+                'products/celana1.jpg',
+            ];
+
+            // Buat 2-4 gambar galeri acak untuk setiap produk
+            for ($i = 0; $i < rand(2, 4); $i++) {
+                $product->images()->create([
+                    'image_url' => collect($galleryImages)->random()
+                ]);
+            }
+        });
     }
 }

@@ -39,6 +39,11 @@ export interface ProductVariant {
     stock: number;
 }
 
+export interface ProductImage {
+    id: number;
+    image_url: string;
+}
+
 export interface Product {
     id: number;
     name: string;
@@ -46,8 +51,9 @@ export interface Product {
     description: string;
     price: number;
     stock: number;
-    image_url: string; 
-    
+    image_url: string; // Gambar utama/cover
+    images?: ProductImage[];   
+
     category?: {
         id: number;
         name: string;

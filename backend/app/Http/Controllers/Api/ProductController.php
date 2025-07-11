@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use App\Events\ProductRestocked;
+use Illuminate\Support\Facades\DB; 
 
 class ProductController extends Controller
 {
@@ -61,8 +62,6 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-// app/Http/Controllers/Api/ProductController.php
-
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -71,21 +70,32 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category_id' => 'required|integer|exists:categories,id',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Validasi untuk gambar
-        ]);
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048', 
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048'        
+         ]);
 
-        // Proses upload gambar
-        if ($request->hasFile('image')) {
-            // Simpan gambar ke storage/app/public/products dan dapatkan path-nya
-            $path = $request->file('image')->store('products', 'public');
-            $validatedData['image_url'] = $path;
-        }
+        $path = $request->file('image')->store('products', 'public');
+        $validatedData['image_url'] = $path;
 
         $validatedData['user_id'] = $request->user()->id;
         $validatedData['slug'] = Str::slug($validatedData['name']) . '-' . time();
 
         $product = Product::create($validatedData);
 
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $validatedData['image_url'] = $path;
+        }
+
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $galleryImage) {
+                $galleryPath = $galleryImage->store('products', 'public');
+                // Buat record baru di tabel product_images
+                $product->images()->create(['image_url' => $galleryPath]);
+            }
+        }
+        
         return response()->json([
             'success' => true,
             'message' => 'Product created successfully',
@@ -103,7 +113,8 @@ class ProductController extends Controller
                     'reviews.user',
                     'questions.user',
                     'questions.answer.user',
-                    'user:id,name,slug'
+                    'user:id,name,slug',
+                    'images',
                 ])                
                 ->loadCount('reviews')
                 ->loadAvg('reviews', 'rating');
@@ -250,4 +261,19 @@ class ProductController extends Controller
         
         return response()->json(['data' => $recommendations]);
     }
+    
+    public function autocomplete(Request $request)
+    {
+        $validated = $request->validate(['q' => 'required|string']);
+        $query = $validated['q'];
+
+        // Membuat pencarian menjadi case-insensitive (tidak peduli huruf besar/kecil).
+        $suggestions = Product::where(DB::raw('LOWER(name)'), 'LIKE', '%' . strtolower($query) . '%')
+                              ->select('name', 'slug')
+                              ->limit(7)
+                              ->get();
+        
+        return response()->json(['data' => $suggestions]);
+    }
+
 }

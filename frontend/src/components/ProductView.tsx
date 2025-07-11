@@ -8,6 +8,7 @@ import { Separator } from "./ui/separator";
 import toast, { Toaster } from "react-hot-toast";
 import Image from "next/image";
 import InfoTabs from "./InfoTabs";
+import ProductGallery from "./ProductGallery"; 
 
 interface ProductViewProps {
   initialProduct: Product;
@@ -39,9 +40,9 @@ export default function ProductView({ initialProduct }: ProductViewProps) {
     <>
       <Toaster position="top-center" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        <div className="relative aspect-square w-full">
-          <Image src={imageUrl} alt={product.name} width={400} height={400} className="object-cover aspect-square w-full group-hover:opacity-75" />
-          </div>
+        {/* Ganti gambar tunggal dengan komponen galeri */}
+        <ProductGallery product={product} />
+        
         <div>
           <ProductDetails product={product} />
         </div>

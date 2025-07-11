@@ -75,5 +75,10 @@ class Product extends Model
     {
         return $this->hasMany(Question::class);
     }
-
+    
+    // Di dalam class Product
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class);
+    }
 }

@@ -7,6 +7,11 @@ interface Product {
   name: string; 
   price: number; 
   image_url: string; 
+  user?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
 }
 interface CartItem { 
   id: number; 
