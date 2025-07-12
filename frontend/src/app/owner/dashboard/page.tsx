@@ -6,6 +6,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import { DollarSign, Package, ShoppingCart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { type Product } from '@/lib/types'; // Import tipe Product
 import Image from 'next/image';
+import LatestReviews from '@/components/owner/LatestReviews'; // <- 1. IMPORT KOMPONEN BARU
+import SalesChart from '@/components/owner/SalesChart'; // 1. Import SalesChart
 
 // Definisikan tipe data untuk statistik yang akan diterima dari API
 interface Stats {
@@ -13,7 +15,8 @@ interface Stats {
   products_sold: number;
   new_orders_count: number;
   best_selling_products: any[];
-  low_stock_products: Product[]; // Data baru untuk produk dengan stok rendah
+  low_stock_products: Product[];
+  sales_over_7_days: { date: string; total_sales: number }[]; // Tambahkan ini
 }
 
 // Komponen kecil yang bisa digunakan kembali untuk menampilkan kartu statistik
@@ -74,12 +77,16 @@ export default function OwnerDashboardPage() {
         <StatCard title="Pesanan Baru" value={stats.new_orders_count} icon={ShoppingCart} />
       </div>
 
+      {stats.sales_over_7_days && (
+          <SalesChart data={stats.sales_over_7_days} />
+      )}
+
       {/* Grid untuk menampung dua widget: Produk Terlaris dan Stok Rendah */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4 mb-8">
         {/* Widget Produk Terlaris */}
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 pb-4">
-            <CheckCircle className="w-6 h-6 text-green-500" />Produk Terlaris Anda</h2>
+            <CheckCircle className="w-6 h-6 text-green-500" />Produk Terjual</h2>
             <ul className="space-y-4">
               {stats.best_selling_products.length > 0 ? stats.best_selling_products.map((item, index) => (
                 <li key={item.product_id} className="flex items-center gap-4">
@@ -118,6 +125,7 @@ export default function OwnerDashboardPage() {
               )) : <p className="text-sm text-gray-500">Semua stok produk Anda aman.</p>}
             </ul>
         </div>
+        <LatestReviews />
       </div>
     </div>
   );

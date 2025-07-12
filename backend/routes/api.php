@@ -84,7 +84,7 @@ Route::middleware(['auth:sanctum', 'role:store_owner', 'verified'])->group(funct
     Route::post('/owner/questions/{question}/answer', [QuestionManagementController::class, 'storeAnswer']);
     Route::get('/owner/returns', [ReturnManagementController::class, 'index']);
     Route::patch('/owner/returns/{returnRequest}', [ReturnManagementController::class, 'update']);
-
+    Route::get('/owner/reviews', [StatsController::class, 'latestReviews']);
 });
 
 // Rute KHUSUS untuk ADMIN
