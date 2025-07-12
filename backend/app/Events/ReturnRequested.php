@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Product; // 1. Import model Product
+use App\Models\ReturnRequest; // 1. Import model ReturnRequest
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -11,26 +11,26 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ProductRestocked
+class ReturnRequested
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * Properti publik untuk menyimpan data produk yang di-restock.
+     * Properti publik untuk menyimpan data permintaan pengembalian.
      * Listener akan mengakses properti ini.
-     * @var \App\Models\Product
+     * @var \App\Models\ReturnRequest
      */
-    public $product;
+    public $returnRequest;
 
     /**
      * Buat instance event baru.
-     * Fungsi ini akan menerima objek Product dari controller.
+     * Fungsi ini akan menerima objek ReturnRequest dari controller.
      *
-     * @param \App\Models\Product $product
+     * @param \App\Models\ReturnRequest $returnRequest
      * @return void
      */
-    public function __construct(Product $product)
+    public function __construct(ReturnRequest $returnRequest)
     {
-        $this->product = $product;
+        $this->returnRequest = $returnRequest;
     }
 }

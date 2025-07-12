@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Events\ReturnRequested; 
 
     class ReturnRequestController extends Controller
     {
@@ -37,11 +38,13 @@ use Illuminate\Support\Facades\Storage;
                 $path = $request->file('image')->store('returns', 'public');
             }
 
-            $orderItem->returnRequest()->create([
+            $returnRequest = $orderItem->returnRequest()->create([
                 'user_id' => $request->user()->id,
                 'reason' => $validated['reason'],
                 'image_url' => $path,
             ]);
+
+            ReturnRequested::dispatch($returnRequest->load(['orderItem.product.user', 'user']));
 
             return response()->json(['message' => 'Permintaan pengembalian berhasil dikirim.'], 201);
         }

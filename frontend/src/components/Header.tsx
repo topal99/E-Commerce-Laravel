@@ -9,7 +9,8 @@ import { Menu, Search, ShoppingCart, User, X, LogOut, LayoutDashboard, Package, 
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { useRouter } from 'next/navigation'; 
 import Cookies from 'js-cookie';
-import SearchSuggestions from './SearchSuggestions'; // Import komponen baru
+import SearchSuggestions from './SearchSuggestions';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 // Asumsi komponen-komponen ini ada dari shadcn/ui
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import NotificationDropdown from './NotificationDropdown';
 
 const navLinks = [
   { href: "/", label: "Beranda" },
@@ -115,19 +117,26 @@ export default function Header() {
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
-  useEffect(() => { if (token) { fetchCart(); fetchWishlist(); } }, [token, fetchCart, fetchWishlist]);
+  const { fetchNotifications } = useNotificationStore();
+
+  // EFEK INI SUDAH BENAR: Mengambil data saat user login (ada token)
+  useEffect(() => { 
+    if (token) {
+      fetchCart();
+      fetchWishlist();
+      fetchNotifications();
+    } 
+  }, [token, fetchCart, fetchWishlist, fetchNotifications]);
+
   useEffect(() => { setIsClient(true); }, []);
 
   const handleLogout = () => {
     logout();
     clearCartOnLogout();
     clearWishlistOnLogout();
-    
     router.push('/');
-
-    // PERBAIKAN: Hapus juga cookie role saat logout
     Cookies.remove('auth_role');
-};
+  };
 
   if (!isClient) {
     return (
@@ -144,17 +153,15 @@ export default function Header() {
         
         {/* Grup Kiri: Logo Desktop & Menu Mobile Trigger */}
         <div className="flex items-center gap-4">
-          {/* Logo untuk Desktop */}
           <Link href="/" className="hidden md:flex items-center gap-2 ">
-          <Image src="/mylogo.png" 
-          alt="E-Comm Logo"
-          width={40}  
-          height={40}
-          priority={false} />
+            <Image src="/mylogo.png" 
+              alt="E-Comm Logo"
+              width={40}  
+              height={40}
+              priority={false} />
             <span className="font-bold text-sm">E-Comm</span>
           </Link>
           
-          {/* Tombol Menu Mobile */}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button size="icon" className="md:hidden">
@@ -163,50 +170,12 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-0">
-               
-              {/* Grup Kanan */}
-              <div className="flex items-center justify-end gap-2">
-                {/* Search Bar Desktop dengan Autocomplete */}
-                <div className="relative w-full max-w-xs hidden md:block" ref={searchContainerRef}>
-                  <form onSubmit={handleSearchSubmit}>
-                    <Input 
-                      type="search" 
-                      placeholder="Cari produk..." 
-                      className="pl-10"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onFocus={() => { if (searchTerm.length > 1) setShowSuggestions(true) }}
-                    />
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  </form>
-                  {/* Tampilkan komponen saran hanya jika showSuggestions true */}
-                  {showSuggestions && (
-                    <SearchSuggestions 
-                      suggestions={suggestions} 
-                      isLoading={isSearching}
-                      onSuggestionClick={handleSuggestionClick} 
-                    />
-                  )}
-                </div>
-                
-                <nav className="flex-1 flex flex-col gap-4 p-4">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.label}
-                      href={link.href}
-                      className="text-lg font-medium text-foreground hover:text-primary transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
+              {/* Konten Sheet di sini */}
             </SheetContent>
           </Sheet>
         </div>
 
-        {/* Logo untuk Mobile (ditampilkan di tengah saat menu desktop disembunyikan) */}
+        {/* Logo untuk Mobile */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/mylogo.png" alt="E-Comm Logo" width={40} height={40} className="h-8 w-8" />
@@ -214,7 +183,7 @@ export default function Header() {
           </Link>
         </div>
         
-        {/* Navigasi Desktop (di kiri) */}
+        {/* Navigasi Desktop */}
         <nav className="hidden ml-6 md:flex flex-1 items-center gap-6 text-sm font-medium">
           {navLinks.map((link) => (
             <Link key={link.label} href={link.href} className="text-muted-foreground transition-colors hover:text-primary">
@@ -241,30 +210,34 @@ export default function Header() {
             )}
           </div>
 
-          {/* Ikon Aksi untuk Customer */}
+          {/* PERBAIKAN DI SINI */}
+          {/* Ikon Keranjang (HANYA untuk customer) */}
           {user && user.role === 'customer' && (
-            <div className="flex items-center">
-
-              <Link href="/cart">
-                <Button variant="ghost-dark" size="icon" className=" relative rounded-full transition-colors">
-                  <ShoppingCart className="h-5 w-5" />
-                  {items.length > 0 && (<span className="absolute top-1 right-2 transform translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{items.length}</span>)}
-                  <span className="sr-only">Keranjang Belanja</span>
-                </Button>
-              </Link>
-
-            </div>
+            <Link href="/cart">
+              <Button size="icon" variant="ghost" className=" relative rounded-full transition-colors">
+                <ShoppingCart className="h-5 w-5" />
+                {items.length > 0 && (<span className="absolute top-1 right-2 transform translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{items.length}</span>)}
+              </Button>
+            </Link>
           )}
 
+          {/* Ikon Notifikasi (untuk SEMUA user yang login) */}
+          {user && (
+            <Button size="icon" variant="ghost" className=" relative rounded-full transition-colors">
+              <NotificationDropdown />
+            </Button>
+          )}
+          
           {/* Menu Akun Pengguna */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center">
-                <Button variant="ghost-dark" size="icon" className="rounded-full transition-colors">
-                  <User className="h-5 w-5 " /></Button>
+                <Button variant="default" size="icon" className="rounded-full transition-colors bg-black">
+                  <User />
+                </Button>
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white">
+            <DropdownMenuContent align="end">
               {token && user ? (
                 <>
                   <DropdownMenuLabel>Hi, {user.name}!</DropdownMenuLabel>
@@ -277,6 +250,7 @@ export default function Header() {
                     <Link href="/my-account/profile"><DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Pengaturan Akun</DropdownMenuItem></Link>
                   </>
                   )}
+                  {/* Pastikan nama role 'store_owner' sudah benar */}
                   {user.role === 'store_owner' && (
                     <>
                       <Link href="/owner/dashboard"><DropdownMenuItem>
@@ -291,7 +265,7 @@ export default function Header() {
                         <SendToBack className="mr-2 h-4 w-4" />Pengembalian Barang</DropdownMenuItem></Link>
                     </>
                   )}
-    
+  
                   {user.role === 'admin' && (<Link href="/admin/users">
                   <DropdownMenuItem><LayoutDashboard className="mr-2 h-4 w-4" /> Panel Admin</DropdownMenuItem></Link>)}
                   <DropdownMenuSeparator />

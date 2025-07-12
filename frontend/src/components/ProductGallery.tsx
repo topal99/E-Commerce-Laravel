@@ -76,6 +76,7 @@ export default function ProductGallery({ product }: ProductGalleryProps) {
                   src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${slide.image_url}`}
                   alt={`Thumbnail ${index + 1}`}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className={cn(
                     "object-cover transition-opacity",
                     index === selectedIndex ? 'opacity-100' : 'opacity-50 hover:opacity-100'

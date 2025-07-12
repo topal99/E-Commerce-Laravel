@@ -3,10 +3,8 @@
 import { useState, useCallback } from "react";
 import { type Product } from "@/lib/types";
 import ProductDetails from "./ProductDetails";
-import ReviewSection from "./reviews/ReviewSection";
 import { Separator } from "./ui/separator";
 import toast, { Toaster } from "react-hot-toast";
-import Image from "next/image";
 import InfoTabs from "./InfoTabs";
 import ProductGallery from "./ProductGallery"; 
 
@@ -33,8 +31,6 @@ export default function ProductView({ initialProduct }: ProductViewProps) {
       toast.error("Gagal memuat ulang ulasan.", { id: toastId });
     }
   }, [product.slug]);
-
-  const imageUrl = `${process.env.NEXT_PUBLIC_API_URL}/storage/${product.image_url}`;
 
   return (
     <>

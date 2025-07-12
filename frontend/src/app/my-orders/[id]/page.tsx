@@ -51,7 +51,6 @@ interface Order {
 }
 
 export default function OrderDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);

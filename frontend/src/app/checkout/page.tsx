@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCartStore } from '@/stores/cartStore';
 import { Loader2, ArrowRight, Edit, MapPin } from 'lucide-react';
-import { type Address } from '@/app/my-account/addresses/page';
 import { useRouter } from "next/navigation";
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
@@ -16,6 +15,15 @@ import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/stores/authStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AddressManager from '@/components/customer/AddressManager';
+
+interface Address {
+  id: number;
+  label: string;
+  recipient_name: string;
+  phone_number: string;
+  full_address: string;
+  city: string;
+}
 
 interface ShippingOption {
   service: string;
@@ -82,7 +90,6 @@ export default function CheckoutPage() {
             body: JSON.stringify({ address_id: selectedAddressId })
         });
         const data = await res.json();
-        // PERBAIKAN: Berikan array kosong sebagai fallback
         setShippingOptions(data.data || []);
       } catch (error) {
         toast.error("Gagal memuat opsi pengiriman.");
@@ -106,7 +113,8 @@ export default function CheckoutPage() {
       }
     }
     const total = sub - disc + (selectedShipping?.cost || 0);
-    return { subtotal: sub, discount: disc, total: Math.max(0, total) };}, [items, selectedShipping, appliedCoupon]);
+    return { subtotal: sub, discount: disc, total: Math.max(0, total) };
+  }, [items, selectedShipping, appliedCoupon]);
 
     const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -151,7 +159,6 @@ export default function CheckoutPage() {
           'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        // PERBAIKAN UTAMA: Sertakan data kupon dan diskon di body request
         body: JSON.stringify({ 
             cart: items.map(item => ({ id: item.product_id, quantity: item.quantity })),
             shipping_address_id: selectedAddressId,
@@ -296,7 +303,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-       {/* Modal Utama untuk Manajemen Alamat */}
+        {/* Modal Utama untuk Manajemen Alamat */}
       <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Kelola Alamat Pengiriman</DialogTitle></DialogHeader>

@@ -9,6 +9,8 @@ use App\Models\Coupon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Events\NewOrderReceived;
+use App\Events\ProductStockDepleted;
 
 class OrderController extends Controller
 {
@@ -77,7 +79,15 @@ class OrderController extends Controller
 
             // 5. Kurangi stok produk
             foreach ($validated['cart'] as $item) {
-                Product::find($item['id'])->decrement('stock', $item['quantity']);
+                // Product::find($item['id'])->decrement('stock', $item['quantity']);
+
+                $product = Product::find($item['id']);
+                $product->decrement('stock', $item['quantity']);
+
+                // Jika setelah dikurangi stoknya menjadi 0, tembakkan event
+                if ($product->fresh()->stock <= 0) {
+                    ProductStockDepleted::dispatch($product);
+                }
             }
 
             // 6. Tandai kupon sebagai sudah digunakan (jika ada)
@@ -87,6 +97,8 @@ class OrderController extends Controller
 
             // Hapus keranjang
             $user->carts()->delete();
+            
+            NewOrderReceived::dispatch($order->load('items.product.user'));
 
             return response()->json([
                 'success' => true,

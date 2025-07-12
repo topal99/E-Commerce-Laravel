@@ -50,8 +50,8 @@ class ProductFactory extends Factory
             // Daftar gambar contoh untuk galeri
             $galleryImages = [
                 'products/baju2.jpg',
-                'products/sepatu1.png',
-                'products/tas1.webp',
+                'products/sepatu3.jpg',
+                'products/tas1.jpg',
                 'products/celana1.jpg',
             ];
 

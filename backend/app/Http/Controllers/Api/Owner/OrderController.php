@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use App\Events\OrderDelivered;
+use App\Events\OrderStatusUpdated; 
 
 class OrderController extends Controller
 {
@@ -65,6 +66,10 @@ class OrderController extends Controller
                   'tracking_number' => $validated['tracking_number'] ?? null,
               ]);
               
+        $customer = $order->user;
+        
+        OrderStatusUpdated::dispatch($order, $customer);
+
         if ($validated['status'] === 'delivered') {
             OrderDelivered::dispatch($order);
         }

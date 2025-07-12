@@ -92,4 +92,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(PointHistory::class)->latest();
     }
+
+        public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->latest(); // 'latest()' untuk mengurutkan
+    }
+
 }

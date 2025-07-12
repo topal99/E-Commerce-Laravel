@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\Owner\ReturnManagementController;
 use App\Http\Controllers\Api\RegionController; 
 use App\Http\Controllers\Api\TrackingController; 
 use App\Http\Controllers\Api\PointsController; 
+use App\Http\Controllers\Api\NotificationController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'updateProfile']);
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
 });
 
 // Rute KHUSUS untuk PEMILIK TOKO

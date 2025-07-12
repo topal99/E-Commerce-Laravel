@@ -1,8 +1,9 @@
 import { type Metadata } from 'next'; 
 import { type Product } from "@/lib/types";
 import ProductView from "@/components/ProductView";
-import RecommendedProducts from '@/components/RecommendedProducts'; 
-import { Separator } from '@/components/ui/separator';
+import { Suspense } from 'react';
+import ProductDetailsSkeleton from '@/components/ProductDetailsSkeleton'; 
+import ProductGallerySkeleton from '@/components/ProductGallerySkeleton'; 
 
 // Fungsi untuk mengambil data produk (tidak ada perubahan)
 async function getProduct(slug: string): Promise<Product | null> {
@@ -18,10 +19,6 @@ async function getProduct(slug: string): Promise<Product | null> {
     }
 }
 
-// ==========================================================
-// BAGIAN BARU: Fungsi generateMetadata
-// ==========================================================
-// Fungsi ini akan berjalan di server untuk membuat metadata dinamis.
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   // Ambil data produk berdasarkan slug dari URL
   const product = await getProduct(params.slug);
@@ -63,17 +60,17 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
         return <div className="text-center p-10"><h1>404</h1><p>Produk tidak ditemukan.</p></div>
     }
 
-    return (
-        <>
-            <div className="container mx-auto p-4 md:p-8">
-                {/* Komponen ProductView yang menampilkan detail utama */}
-                <ProductView initialProduct={product} />
-            </div>
-
-            <Separator className="my-8" />
-
-            {/* 2. Tampilkan komponen rekomendasi di bawah, kirim ID produk saat ini */}
-            <RecommendedProducts productId={product.id} />
-        </>
-        );
+  return (
+    <div className="container mx-auto p-4 md:p-8">
+      {/* 3. Bungkus komponen dinamis Anda dengan Suspense */}
+      <Suspense fallback={
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <ProductGallerySkeleton />
+            <ProductDetailsSkeleton />
+          </div>
+        }>
+        <ProductView initialProduct={product} />
+      </Suspense>
+    </div>
+  );
 }
